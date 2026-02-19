@@ -1,24 +1,31 @@
 package applicationstate
 
 import (
+	"fmt"
 	"time"
 
 	lipgloss "github.com/charmbracelet/lipgloss"
 )
 
 func (m Model) View() string {
-	var style = lipgloss.NewStyle().
+	var timerStyle = lipgloss.NewStyle().
 		Bold(true).
 		PaddingLeft(4).
-		Faint(true).Align(lipgloss.Right)
+		Faint(true)
+	var inputStyle = lipgloss.NewStyle().
+		Bold(true).
+		PaddingLeft(4)
 
 	d := time.Since(m.sessionStart)
 	d = d.Round(time.Second)
 
-	s := ""
+	var timerText = ""
+	timerText += d.String()
+	timerText += " / "
+	timerText += m.sessionTimeLimitSeconds.Round(time.Second).String()
 
-	s += d.String()
-	s += " / "
-	s += m.sessionTimeLimitSeconds.Round(time.Second).String()
-	return lipgloss.Place(100, 22, lipgloss.Center, lipgloss.Center, style.Render(s))
+	var rendered = inputStyle.Render(fmt.Sprintf("session length %s", m.sessionTimeLimitInput.View())) + "\n" + timerStyle.Render(timerText)
+	return rendered
+
+	// return lipgloss.Place(100, 22, lipgloss.Center, lipgloss.Center, rendered)
 }

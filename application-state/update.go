@@ -5,13 +5,12 @@ import (
 )
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
 
-	// Is it a key press?
+	var cmd tea.Cmd
+
+	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-
-		// These keys should exit the program.
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		}
@@ -20,8 +19,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, doTick()
 	}
 
-	// Return the updated model to the Bubble Tea runtime for processing.
-	// Note that we're not returning a command.
-	return m, nil
+	m.sessionTimeLimitInput, cmd = m.sessionTimeLimitInput.Update(msg)
+	return m, cmd
 
 }

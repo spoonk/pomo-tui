@@ -1,6 +1,7 @@
 package applicationstate
 
 import (
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"time"
 )
@@ -12,14 +13,19 @@ type Model struct {
 	sessionTimeLimitSeconds time.Duration
 	sessionBreakTimeSeconds time.Duration
 
-	sessionRunning bool
+	sessionTimeLimitInput textinput.Model
+	sessionRunning        bool
 }
 
 func InitialModel() Model {
+	ti := textinput.New()
+	ti.Focus()
+
 	return Model{
 		sessionStart:            time.Now(),
 		sessionTimeLimitSeconds: 25 * time.Minute,
 		sessionBreakTimeSeconds: 5 * time.Minute,
+		sessionTimeLimitInput:   ti,
 		sessionRunning:          false,
 	}
 }
@@ -31,5 +37,5 @@ func doTick() tea.Cmd {
 }
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(doTick(), tea.ClearScreen)
+	return tea.Batch(doTick(), tea.ClearScreen, textinput.Blink)
 }
