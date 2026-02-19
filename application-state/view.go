@@ -9,13 +9,16 @@ import (
 func (m Model) View() string {
 	var style = lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color("#FAFAFA")).
-		Background(lipgloss.Color("#7D56F4")).
-		PaddingTop(2).
 		PaddingLeft(4).
-		Width(22)
+		Faint(true).Align(lipgloss.Right)
 
-	var elapsedTime = time.Since(m.sessionStartSeconds)
+	d := time.Since(m.sessionStart)
+	d = d.Round(time.Second)
 
-	return style.Render(elapsedTime.String())
+	s := ""
+
+	s += d.String()
+	s += " / "
+	s += m.sessionTimeLimitSeconds.Round(time.Second).String()
+	return lipgloss.Place(100, 22, lipgloss.Center, lipgloss.Center, style.Render(s))
 }

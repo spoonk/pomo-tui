@@ -8,28 +8,28 @@ import (
 type tickMsg time.Time
 
 type Model struct {
-	sessionStartSeconds     time.Time
-	sessionTimeLimitSeconds float64
-	sessionBreakTimeSeconds float64
+	sessionStart            time.Time
+	sessionTimeLimitSeconds time.Duration
+	sessionBreakTimeSeconds time.Duration
 
 	sessionRunning bool
 }
 
 func InitialModel() Model {
 	return Model{
-		sessionStartSeconds:     time.Now(),
-		sessionTimeLimitSeconds: 25 * 60,
-		sessionBreakTimeSeconds: 5 * 60,
+		sessionStart:            time.Now(),
+		sessionTimeLimitSeconds: 25 * time.Minute,
+		sessionBreakTimeSeconds: 5 * time.Minute,
 		sessionRunning:          false,
 	}
 }
 
 func doTick() tea.Cmd {
-	return tea.Every(20*time.Millisecond, func(t time.Time) tea.Msg {
+	return tea.Every(200*time.Millisecond, func(t time.Time) tea.Msg {
 		return tickMsg(t)
 	})
 }
 
 func (m Model) Init() tea.Cmd {
-	return doTick()
+	return tea.Batch(doTick(), tea.ClearScreen)
 }
