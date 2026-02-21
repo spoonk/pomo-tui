@@ -10,15 +10,18 @@ import (
 func (m Model) runningSessionView() string {
 	var timerStyle = lipgloss.NewStyle().
 		Bold(true).
-		Faint(true)
+		Faint(true).Align(lipgloss.Center)
 
 	d := time.Since(m.sessionStart)
 	d = d.Round(time.Second)
 
-	var timerText = m.spinner.View() + " "
+	// var timerText = m.spinner.View() + " "
+	var timerText = ""
 	timerText += d.String()
 	timerText += " / "
 	timerText += m.timeLimit.Round(time.Second).String()
+	timerText += "\n"
+	timerText += fmt.Sprintf("[break: %s]", m.breakLimit.Round(time.Second).String())
 
 	content := timerStyle.Render(timerText)
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
@@ -72,10 +75,7 @@ func (m Model) inputView() string {
 	var inputStyleFocused = lipgloss.NewStyle().
 		Bold(true)
 
-	var inputStyleUnFocused = lipgloss.NewStyle().
-		Bold(false).
-		Faint(true).
-		PaddingLeft(2)
+	var inputStyleUnFocused = lipgloss.NewStyle().Faint(true)
 
 	timeLimit := ""
 	breakLimit := ""

@@ -42,11 +42,11 @@ func (m Model) inputStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, m.breakLimitInput.Focus()
 			}
 
-		case "up":
+		case "up", "k":
 			m.breakLimitInput.Blur()
 			return m, m.timeLimitInput.Focus()
 
-		case "down":
+		case "down", "j":
 			m.timeLimitInput.Blur()
 			return m, m.breakLimitInput.Focus()
 		}
