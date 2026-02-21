@@ -45,7 +45,7 @@ func (m Model) runningSessionView() string {
 
 	var pauseTextStyle = lipgloss.NewStyle().
 		Faint(true).
-		Foreground(lipgloss.Color("129")).
+		Foreground(lipgloss.Color("#A7C080")).
 		Align(lipgloss.Center)
 
 	d := time.Since(m.sessionStart) - m.pausedDuration
@@ -53,7 +53,7 @@ func (m Model) runningSessionView() string {
 
 	pauseText := ""
 	if m.isPaused {
-		pauseText += "[paused] "
+		pauseText += " ⏸︎   "
 	}
 	var timerText = ""
 	timerText += d.String()
@@ -92,7 +92,7 @@ func (m Model) endView() string {
 	durationStr := formatDuration(duration)
 
 	checkLine := checkStyle.Render("✓ Session complete")
-	timeLine := infoStyle.Render(fmt.Sprintf("%s  →  %s (%s)", startTime, endTime, durationStr))
+	timeLine := infoStyle.Render(fmt.Sprintf("%s  >  %s (%s)", startTime, endTime, durationStr))
 	// durationLine := infoStyle.Render(fmt.Sprintf("%s", durationStr))
 
 	content := checkLine + "\n" + timeLine
