@@ -35,12 +35,11 @@ func (m Model) inputView() string {
 	breakLimit := ""
 
 	if m.timeLimitInput.Focused() {
-		timeLimit = inputStyleFocused.Render(fmt.Sprintf("session length %s", m.timeLimitInput.View()))
-		breakLimit = inputStyleUnFocused.Render(fmt.Sprintf("break length % s", m.breakLimitInput.View()))
+		timeLimit = inputStyleFocused.Render(fmt.Sprintf("session length %s min", m.timeLimitInput.View()))
+		breakLimit = inputStyleUnFocused.Render(fmt.Sprintf("break length %s min", m.breakLimitInput.View()))
 	} else {
-
-		timeLimit = inputStyleUnFocused.Render(fmt.Sprintf("session length %s", m.timeLimitInput.View()))
-		breakLimit = inputStyleFocused.Render(fmt.Sprintf("break length % s", m.breakLimitInput.View()))
+		timeLimit = inputStyleUnFocused.Render(fmt.Sprintf("session length %s min", m.timeLimitInput.View()))
+		breakLimit = inputStyleFocused.Render(fmt.Sprintf("break length %s min", m.breakLimitInput.View()))
 	}
 
 	return timeLimit + "\n" + breakLimit

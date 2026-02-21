@@ -1,10 +1,24 @@
 package applicationstate
 
 import (
+	"strconv"
+	"time"
+
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type changeState string
+
+func parseMins(s string, fallback int) time.Duration {
+	if s == "" {
+		return time.Duration(fallback) * time.Minute
+	}
+	n, err := strconv.Atoi(s)
+	if err != nil || n <= 0 {
+		return time.Duration(fallback) * time.Minute
+	}
+	return time.Duration(n) * time.Minute
+}
 
 func (m Model) inputStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 
@@ -18,7 +32,9 @@ func (m Model) inputStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "enter":
 			if m.breakLimitInput.Focused() {
-				// move to next state
+				m.timeLimit = parseMins(m.timeLimitInput.Value(), 25)
+				m.breakLimit = parseMins(m.breakLimitInput.Value(), 5)
+				m.sessionStart = time.Now()
 				m.sessionRunning = true
 				return m, doTick()
 			} else if m.timeLimitInput.Focused() {

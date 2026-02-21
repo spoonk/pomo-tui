@@ -1,6 +1,7 @@
 package applicationstate
 
 import (
+	"fmt"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"time"
@@ -20,8 +21,16 @@ type Model struct {
 func InitialModel() Model {
 	sessionInput := textinput.New()
 	sessionInput.Focus()
+	sessionInput.Placeholder = "25"
+	sessionInput.CharLimit = 3
+	sessionInput.Width = 5
+	sessionInput.Validate = validateMinutes
 
 	breakInput := textinput.New()
+	breakInput.Placeholder = "5"
+	breakInput.CharLimit = 3
+	breakInput.Width = 5
+	breakInput.Validate = validateMinutes
 
 	return Model{
 		sessionStart:    time.Now(),
@@ -31,6 +40,15 @@ func InitialModel() Model {
 		breakLimitInput: breakInput,
 		sessionRunning:  false,
 	}
+}
+
+func validateMinutes(s string) error {
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			return fmt.Errorf("invalid character: %c", c)
+		}
+	}
+	return nil
 }
 
 type tickMsg time.Time
