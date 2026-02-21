@@ -33,12 +33,14 @@ type Model struct {
 func InitialModel() Model {
 	sessionInput := textinput.New()
 	sessionInput.Focus()
+	sessionInput.Prompt = ""
 	sessionInput.Placeholder = "25"
 	sessionInput.CharLimit = 3
 	sessionInput.Width = 5
 	sessionInput.Validate = validateMinutes
 
 	breakInput := textinput.New()
+	breakInput.Prompt = ""
 	breakInput.Placeholder = "5"
 	breakInput.CharLimit = 3
 	breakInput.Width = 5
