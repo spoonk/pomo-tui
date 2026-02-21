@@ -61,20 +61,6 @@ func (m Model) inputStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m Model) endStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
-
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+c", "q":
-			return m, tea.Quit
-		}
-	}
-
-	return m, cmd
-}
-
 func (m Model) timerStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -114,12 +100,30 @@ func (m Model) timerStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, doTick()
 
 	case spinner.TickMsg:
+		if m.isPaused {
+			return m, nil
+		}
+
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
 	}
 
 	return m, nil
+}
+
+func (m Model) endStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+c", "q":
+			return m, tea.Quit
+		}
+	}
+
+	return m, cmd
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
