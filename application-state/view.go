@@ -30,7 +30,7 @@ func (m Model) runningSessionView() string {
 func (m Model) endView() string {
 	checkStyle := lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color("46"))
+		Foreground(lipgloss.Color("#A7C080"))
 
 	infoStyle := lipgloss.NewStyle().
 		Faint(true).
@@ -42,11 +42,11 @@ func (m Model) endView() string {
 	duration := m.sessionEnd.Sub(m.sessionStart).Round(time.Second)
 	durationStr := formatDuration(duration)
 
-	checkLine := checkStyle.Render("✓ Session completed")
-	timeLine := infoStyle.Render(fmt.Sprintf("%s  →  %s", startTime, endTime))
-	durationLine := infoStyle.Render(fmt.Sprintf("%s", durationStr))
+	checkLine := checkStyle.Render("✓ Session complete")
+	timeLine := infoStyle.Render(fmt.Sprintf("%s  →  %s (%s)", startTime, endTime, durationStr))
+	// durationLine := infoStyle.Render(fmt.Sprintf("%s", durationStr))
 
-	content := checkLine + "\n" + timeLine + "\n" + durationLine
+	content := checkLine + "\n" + timeLine
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
 
