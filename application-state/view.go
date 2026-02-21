@@ -25,15 +25,26 @@ func (m Model) runningSessionView() string {
 }
 
 func (m Model) inputView() string {
-	var inputStyle = lipgloss.NewStyle().
+	var inputStyleFocused = lipgloss.NewStyle().
 		Bold(true).
 		PaddingLeft(4)
 
-	return inputStyle.Render(
-		fmt.Sprintf(
-			"session length %s", m.timeLimitInput.View()) +
-			"\n" +
-			fmt.Sprintf("break length % s", m.breakLimitInput.View()))
+	var inputStyleUnFocused = lipgloss.NewStyle().Bold(false).Faint(true).PaddingLeft(2)
+
+	timeLimit := ""
+	breakLimit := ""
+
+	if m.timeLimitInput.Focused() {
+		timeLimit = inputStyleFocused.Render(fmt.Sprintf("session length %s", m.timeLimitInput.View()))
+		breakLimit = inputStyleUnFocused.Render(fmt.Sprintf("break length % s", m.breakLimitInput.View()))
+	} else {
+
+		timeLimit = inputStyleUnFocused.Render(fmt.Sprintf("session length %s", m.timeLimitInput.View()))
+		breakLimit = inputStyleFocused.Render(fmt.Sprintf("break length % s", m.breakLimitInput.View()))
+	}
+
+	return timeLimit + "\n" + breakLimit
+
 }
 
 func (m Model) View() string {
