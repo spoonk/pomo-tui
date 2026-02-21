@@ -24,6 +24,10 @@ func (m Model) runningSessionView() string {
 	return timerStyle.Render(timerText)
 }
 
+func (m Model) endView() string {
+	return "Done"
+}
+
 func (m Model) inputView() string {
 	var inputStyleFocused = lipgloss.NewStyle().
 		Bold(true).
@@ -47,9 +51,15 @@ func (m Model) inputView() string {
 }
 
 func (m Model) View() string {
-	if m.sessionRunning {
+	switch m.programState {
+	case initialState:
+		return m.inputView()
+
+	case sessionRunningState:
 		return m.runningSessionView()
+
+	default:
+		return m.endView()
 	}
 
-	return m.inputView()
 }

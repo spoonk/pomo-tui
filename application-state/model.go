@@ -7,15 +7,22 @@ import (
 	"time"
 )
 
+type appState int
+
+const (
+	initialState appState = iota
+	sessionRunningState
+	sessionEndedState
+)
+
 type Model struct {
+	programState appState
 	sessionStart time.Time
 	timeLimit    time.Duration
 	breakLimit   time.Duration
 
 	timeLimitInput  textinput.Model
 	breakLimitInput textinput.Model
-
-	sessionRunning bool
 }
 
 func InitialModel() Model {
@@ -33,12 +40,12 @@ func InitialModel() Model {
 	breakInput.Validate = validateMinutes
 
 	return Model{
+		programState:    initialState,
 		sessionStart:    time.Now(),
 		timeLimit:       25 * time.Minute,
 		breakLimit:      5 * time.Minute,
 		timeLimitInput:  sessionInput,
 		breakLimitInput: breakInput,
-		sessionRunning:  false,
 	}
 }
 

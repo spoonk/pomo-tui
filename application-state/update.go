@@ -21,7 +21,6 @@ func parseMins(s string, fallback int) time.Duration {
 }
 
 func (m Model) inputStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
-
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
@@ -35,7 +34,7 @@ func (m Model) inputStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.timeLimit = parseMins(m.timeLimitInput.Value(), 25)
 				m.breakLimit = parseMins(m.breakLimitInput.Value(), 5)
 				m.sessionStart = time.Now()
-				m.sessionRunning = true
+				m.programState = sessionRunningState
 				return m, doTick()
 			} else if m.timeLimitInput.Focused() {
 				m.timeLimitInput.Blur()
@@ -53,11 +52,7 @@ func (m Model) inputStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	if !m.sessionRunning {
-		return m.inputStateUpdate(msg)
-	}
-
+func (m Model) endStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
@@ -66,10 +61,41 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		}
-
-	case tickMsg:
-		return m, doTick()
 	}
 
 	return m, cmd
+}
+
+func (m Model) timerStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+c", "q":
+			return m, tea.Quit
+		}
+
+	case tickMsg:
+		d := time.Since(m.sessionStart)
+		d = d.Round(time.Second)
+
+		if d.Minutes() >= m.timeLimit.Minutes() {
+			m.programState = sessionEndedState
+			return m, nil // do nothing
+		}
+
+		return m, doTick()
+	}
+	return m, cmd
+}
+
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch m.programState {
+	case initialState:
+		return m.inputStateUpdate(msg)
+	case sessionRunningState:
+		return m.timerStateUpdate(msg)
+	default:
+		return m.endStateUpdate(msg)
+	}
 }
