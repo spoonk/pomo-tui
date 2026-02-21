@@ -25,6 +25,9 @@ type Model struct {
 	timeLimit    time.Duration
 	breakLimit   time.Duration
 
+	width  int
+	height int
+
 	timeLimitInput  textinput.Model
 	breakLimitInput textinput.Model
 	spinner         spinner.Model

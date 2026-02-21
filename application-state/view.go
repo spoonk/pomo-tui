@@ -10,8 +10,6 @@ import (
 func (m Model) runningSessionView() string {
 	var timerStyle = lipgloss.NewStyle().
 		Bold(true).
-		PaddingLeft(2).
-		PaddingTop(1).
 		Faint(true)
 
 	d := time.Since(m.sessionStart)
@@ -22,18 +20,18 @@ func (m Model) runningSessionView() string {
 	timerText += " / "
 	timerText += m.timeLimit.Round(time.Second).String()
 
-	return timerStyle.Render(timerText)
+	content := timerStyle.Render(timerText)
+	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
 
 func (m Model) endView() string {
 	checkStyle := lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color("46")).
-		PaddingLeft(2)
+		Foreground(lipgloss.Color("46"))
 
 	infoStyle := lipgloss.NewStyle().
 		Faint(true).
-		PaddingLeft(4)
+		PaddingLeft(2)
 
 	startTime := m.sessionStart.Format("3:04 PM")
 	endTime := m.sessionEnd.Format("3:04 PM")
@@ -45,7 +43,8 @@ func (m Model) endView() string {
 	timeLine := infoStyle.Render(fmt.Sprintf("%s  →  %s", startTime, endTime))
 	durationLine := infoStyle.Render(fmt.Sprintf("%s", durationStr))
 
-	return checkLine + "\n" + timeLine + "\n" + durationLine
+	content := checkLine + "\n" + timeLine + "\n" + durationLine
+	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
 
 func formatDuration(d time.Duration) string {
@@ -71,24 +70,26 @@ func formatDuration(d time.Duration) string {
 
 func (m Model) inputView() string {
 	var inputStyleFocused = lipgloss.NewStyle().
-		Bold(true).
-		PaddingLeft(0)
+		Bold(true)
 
-	var inputStyleUnFocused = lipgloss.NewStyle().Bold(false).Faint(true).PaddingLeft(2)
+	var inputStyleUnFocused = lipgloss.NewStyle().
+		Bold(false).
+		Faint(true).
+		PaddingLeft(2)
 
 	timeLimit := ""
 	breakLimit := ""
 
 	if m.timeLimitInput.Focused() {
 		timeLimit = inputStyleFocused.Render(fmt.Sprintf("> session length %s min", m.timeLimitInput.View()))
-		breakLimit = inputStyleUnFocused.Render(fmt.Sprintf("break length %s min", m.breakLimitInput.View()))
+		breakLimit = inputStyleUnFocused.Render(fmt.Sprintf("  break length %s min", m.breakLimitInput.View()))
 	} else {
-		timeLimit = inputStyleUnFocused.Render(fmt.Sprintf("session length %s min", m.timeLimitInput.View()))
+		timeLimit = inputStyleUnFocused.Render(fmt.Sprintf("  session length %s min", m.timeLimitInput.View()))
 		breakLimit = inputStyleFocused.Render(fmt.Sprintf("> break length %s min", m.breakLimitInput.View()))
 	}
 
-	return timeLimit + "\n" + breakLimit
-
+	content := timeLimit + "\n" + breakLimit
+	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
 
 func (m Model) View() string {
