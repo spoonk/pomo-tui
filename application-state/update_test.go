@@ -309,3 +309,108 @@ func TestEndStateUpdate_Quit(t *testing.T) {
 		})
 	}
 }
+
+// TestTimerStateUpdate_Pause tests that pressing 'p' pauses the timer
+func TestTimerStateUpdate_Pause(t *testing.T) {
+	m := InitialModel()
+	m.programState = sessionRunningState
+	m.sessionStart = time.Now().Add(-5 * time.Minute)
+	m.timeLimit = 25 * time.Minute
+	m.isPaused = false
+
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("p")}
+	pauseTime := time.Now()
+
+	updatedModel, cmd := m.timerStateUpdate(msg)
+	m = updatedModel.(Model)
+
+	// Should be paused
+	assert.True(t, m.isPaused, "should be paused after pressing 'p'")
+
+	// Should set pausedAt time
+	assert.WithinDuration(t, pauseTime, m.pausedAt, 100*time.Millisecond,
+		"pausedAt should be set to approximately now")
+
+	// Should not return a tick command
+	assert.Nil(t, cmd, "should not return a tick command when paused")
+}
+
+// TestTimerStateUpdate_Resume tests that pressing 'p' while paused resumes the timer
+func TestTimerStateUpdate_Resume(t *testing.T) {
+	m := InitialModel()
+	m.programState = sessionRunningState
+	m.sessionStart = time.Now().Add(-5 * time.Minute)
+	m.timeLimit = 25 * time.Minute
+	m.isPaused = true
+	m.pausedAt = time.Now().Add(-2 * time.Minute) // Paused 2 minutes ago
+	m.pausedDuration = 1 * time.Minute             // Already had 1 minute paused
+
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("p")}
+
+	updatedModel, cmd := m.timerStateUpdate(msg)
+	m = updatedModel.(Model)
+
+	// Should no longer be paused
+	assert.False(t, m.isPaused, "should not be paused after pressing 'p' while paused")
+
+	// Should have accumulated the paused duration (1 min + 2 min)
+	assert.InDelta(t, 3*time.Minute, m.pausedDuration, float64(1*time.Second),
+		"pausedDuration should accumulate time spent paused")
+
+	// Should return a tick command to resume
+	assert.NotNil(t, cmd, "should return a tick command when resuming")
+}
+
+// TestTimerStateUpdate_PausedTick tests that tick messages are ignored when paused
+func TestTimerStateUpdate_PausedTick(t *testing.T) {
+	m := InitialModel()
+	m.programState = sessionRunningState
+	m.sessionStart = time.Now().Add(-5 * time.Minute)
+	m.timeLimit = 25 * time.Minute
+	m.isPaused = true
+
+	msg := tickMsg("tick")
+
+	updatedModel, cmd := m.timerStateUpdate(msg)
+	m = updatedModel.(Model)
+
+	// Should still be in running state (not completed)
+	assert.Equal(t, sessionRunningState, m.programState, "should remain in sessionRunningState")
+
+	// Should still be paused
+	assert.True(t, m.isPaused, "should still be paused")
+
+	// Should not return a command
+	assert.Nil(t, cmd, "should not return a command while paused")
+}
+
+// TestTimerStateUpdate_CompletionWithPause tests timer completion accounting for paused time
+func TestTimerStateUpdate_CompletionWithPause(t *testing.T) {
+	m := InitialModel()
+	m.programState = sessionRunningState
+	m.sessionStart = time.Now().Add(-30 * time.Minute) // Started 30 minutes ago
+	m.timeLimit = 25 * time.Minute
+	m.pausedDuration = 6 * time.Minute // But 6 minutes were paused
+	m.isPaused = false
+
+	// Effective time: 30 - 6 = 24 minutes (should NOT complete)
+	msg := tickMsg("tick")
+
+	updatedModel, cmd := m.timerStateUpdate(msg)
+	m = updatedModel.(Model)
+
+	// Should still be running (24 < 25)
+	assert.Equal(t, sessionRunningState, m.programState, "should still be running")
+	assert.NotNil(t, cmd, "should return a tick command to continue")
+
+	// Now test with more time elapsed
+	m.sessionStart = time.Now().Add(-32 * time.Minute) // Started 32 minutes ago
+	// Effective time: 32 - 6 = 26 minutes (should complete)
+
+	updatedModel, cmd = m.timerStateUpdate(msg)
+	m = updatedModel.(Model)
+
+	// Should transition to ended state
+	assert.Equal(t, sessionEndedState, m.programState, "should transition to sessionEndedState")
+	assert.Nil(t, cmd, "should not return a command after completion")
+}

@@ -25,6 +25,10 @@ type Model struct {
 	timeLimit    time.Duration
 	breakLimit   time.Duration
 
+	isPaused       bool
+	pausedAt       time.Time
+	pausedDuration time.Duration
+
 	width  int
 	height int
 

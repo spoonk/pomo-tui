@@ -33,15 +33,18 @@ The application uses the **Elm Architecture** via Bubble Tea:
 
 Three distinct program states (appState enum):
 - **initialState**: User inputs session and break lengths
-- **sessionRunningState**: Timer actively counting up
+- **sessionRunningState**: Timer actively counting up (can be paused/resumed)
 - **sessionEndedState**: Session complete, showing summary
+
+The running state supports pause/resume functionality via the `isPaused` flag. When paused, tick messages are ignored and the `pausedDuration` accumulates time spent paused, which is subtracted from elapsed time calculations.
 
 ### Package Structure
 
 **application-state package** contains all business logic:
 
 - **model.go**:
-  - Defines the `Model` struct (program state, timers, UI components)
+  - Defines the `Model` struct (program state, timers, pause state, UI components)
+  - Pause tracking fields: `isPaused`, `pausedAt`, `pausedDuration`
   - `InitialModel()` constructor
   - `validateMinutes()` input validation
   - `doTick()` creates timer tick commands
@@ -50,16 +53,18 @@ Three distinct program states (appState enum):
 - **update.go**:
   - Main `Update()` dispatcher handles all messages
   - `inputStateUpdate()` handles user input for session configuration
-  - `timerStateUpdate()` processes tick messages and completion logic
+  - `timerStateUpdate()` processes tick messages, pause/resume ('p' key), and completion logic
   - `endStateUpdate()` handles end screen interactions
   - `parseMins()` helper for parsing minute inputs with fallback defaults
+  - Pause/resume logic: toggles `isPaused`, tracks `pausedDuration`, stops/resumes tick commands
 
 - **view.go**:
   - Main `View()` dispatcher renders appropriate state
   - `inputView()` renders session/break input screen with focus indicators
-  - `runningSessionView()` renders active timer display
+  - `runningSessionView()` renders active timer display with pause indicator and keybind hints
   - `endView()` renders completion screen with time summary
   - `formatDuration()` formats time.Duration into readable strings
+  - Elapsed time calculation accounts for `pausedDuration` to show accurate progress
 
 **main.go**: Entry point that instantiates and runs the Bubble Tea program
 
@@ -79,8 +84,9 @@ Three distinct program states (appState enum):
 
 ### Navigation
 
-- `j`/`down`, `k`/`up`: Navigate between inputs (vim-style)
+- `j`/`down`, `k`/`up`: Navigate between inputs in initial state (vim-style)
 - `enter`: Advance to next input or start session
+- `p`: Pause/resume timer in running state
 - `q`/`ctrl+c`: Quit at any time
 
 ## Testing

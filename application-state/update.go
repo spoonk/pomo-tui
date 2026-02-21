@@ -81,10 +81,28 @@ func (m Model) timerStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
+
+		case "p":
+			if m.isPaused {
+				// Resume: accumulate the paused time
+				m.pausedDuration += time.Since(m.pausedAt)
+				m.isPaused = false
+				return m, doTick()
+			} else {
+				// Pause: record when we paused
+				m.pausedAt = time.Now()
+				m.isPaused = true
+				return m, nil // stop ticking
+			}
 		}
 
 	case tickMsg:
-		d := time.Since(m.sessionStart)
+		// Only process ticks if not paused
+		if m.isPaused {
+			return m, nil
+		}
+
+		d := time.Since(m.sessionStart) - m.pausedDuration
 		d = d.Round(time.Second)
 
 		if d.Minutes() >= m.timeLimit.Minutes() {
