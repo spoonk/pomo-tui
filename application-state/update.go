@@ -87,7 +87,7 @@ func (m Model) timerStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		d := time.Since(m.sessionStart)
 		d = d.Round(time.Second)
 
-		if true || d.Minutes() >= m.timeLimit.Minutes() {
+		if d.Minutes() >= m.timeLimit.Minutes() {
 			m.sessionEnd = time.Now()
 			m.programState = sessionEndedState
 			return m, nil // do nothing
