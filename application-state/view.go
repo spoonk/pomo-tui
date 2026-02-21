@@ -16,7 +16,7 @@ func (m Model) runningSessionView() string {
 	d := time.Since(m.sessionStart)
 	d = d.Round(time.Second)
 
-	var timerText = ""
+	var timerText = m.spinner.View() + " "
 	timerText += d.String()
 	timerText += " / "
 	timerText += m.timeLimit.Round(time.Second).String()

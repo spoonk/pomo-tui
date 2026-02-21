@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -35,11 +36,19 @@ func (m Model) inputStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.breakLimit = parseMins(m.breakLimitInput.Value(), 5)
 				m.sessionStart = time.Now()
 				m.programState = sessionRunningState
-				return m, doTick()
+				return m, tea.Batch(doTick(), m.spinner.Tick)
 			} else if m.timeLimitInput.Focused() {
 				m.timeLimitInput.Blur()
 				return m, m.breakLimitInput.Focus()
 			}
+
+		case "up":
+			m.breakLimitInput.Blur()
+			return m, m.timeLimitInput.Focus()
+
+		case "down":
+			m.timeLimitInput.Blur()
+			return m, m.breakLimitInput.Focus()
 		}
 	}
 
@@ -67,7 +76,6 @@ func (m Model) endStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) timerStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -86,8 +94,14 @@ func (m Model) timerStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		return m, doTick()
+
+	case spinner.TickMsg:
+		var cmd tea.Cmd
+		m.spinner, cmd = m.spinner.Update(msg)
+		return m, cmd
 	}
-	return m, cmd
+
+	return m, nil
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

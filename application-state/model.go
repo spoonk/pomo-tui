@@ -2,9 +2,12 @@ package applicationstate
 
 import (
 	"fmt"
+	"time"
+
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"time"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type appState int
@@ -24,6 +27,7 @@ type Model struct {
 
 	timeLimitInput  textinput.Model
 	breakLimitInput textinput.Model
+	spinner         spinner.Model
 }
 
 func InitialModel() Model {
@@ -40,6 +44,11 @@ func InitialModel() Model {
 	breakInput.Width = 5
 	breakInput.Validate = validateMinutes
 
+	// spinner
+	s := spinner.New()
+	s.Spinner = spinner.Points
+	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
+
 	return Model{
 		programState:    initialState,
 		sessionStart:    time.Now(),
@@ -47,6 +56,7 @@ func InitialModel() Model {
 		breakLimit:      5 * time.Minute,
 		timeLimitInput:  sessionInput,
 		breakLimitInput: breakInput,
+		spinner:         s,
 	}
 }
 
@@ -59,14 +69,14 @@ func validateMinutes(s string) error {
 	return nil
 }
 
-type tickMsg time.Time
+type tickMsg string
 
 func doTick() tea.Cmd {
 	return tea.Every(200*time.Millisecond, func(t time.Time) tea.Msg {
-		return tickMsg(t)
+		return tickMsg("whatever")
 	})
 }
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(doTick(), tea.ClearScreen, textinput.Blink)
+	return tea.Batch(tea.ClearScreen, textinput.Blink)
 }
