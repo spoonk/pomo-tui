@@ -6,29 +6,34 @@ import (
 	"time"
 )
 
-type tickMsg time.Time
-
 type Model struct {
-	sessionStart            time.Time
-	sessionTimeLimitSeconds time.Duration
-	sessionBreakTimeSeconds time.Duration
+	sessionStart time.Time
+	timeLimit    time.Duration
+	breakLimit   time.Duration
 
-	sessionTimeLimitInput textinput.Model
-	sessionRunning        bool
+	timeLimitInput  textinput.Model
+	breakLimitInput textinput.Model
+
+	sessionRunning bool
 }
 
 func InitialModel() Model {
-	ti := textinput.New()
-	ti.Focus()
+	sessionInput := textinput.New()
+	sessionInput.Focus()
+
+	breakInput := textinput.New()
 
 	return Model{
-		sessionStart:            time.Now(),
-		sessionTimeLimitSeconds: 25 * time.Minute,
-		sessionBreakTimeSeconds: 5 * time.Minute,
-		sessionTimeLimitInput:   ti,
-		sessionRunning:          false,
+		sessionStart:    time.Now(),
+		timeLimit:       25 * time.Minute,
+		breakLimit:      5 * time.Minute,
+		timeLimitInput:  sessionInput,
+		breakLimitInput: breakInput,
+		sessionRunning:  false,
 	}
 }
+
+type tickMsg time.Time
 
 func doTick() tea.Cmd {
 	return tea.Every(200*time.Millisecond, func(t time.Time) tea.Msg {

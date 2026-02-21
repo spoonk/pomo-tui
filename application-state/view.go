@@ -7,14 +7,11 @@ import (
 	lipgloss "github.com/charmbracelet/lipgloss"
 )
 
-func (m Model) View() string {
+func (m Model) runningSessionView() string {
 	var timerStyle = lipgloss.NewStyle().
 		Bold(true).
 		PaddingLeft(4).
 		Faint(true)
-	var inputStyle = lipgloss.NewStyle().
-		Bold(true).
-		PaddingLeft(4)
 
 	d := time.Since(m.sessionStart)
 	d = d.Round(time.Second)
@@ -22,10 +19,27 @@ func (m Model) View() string {
 	var timerText = ""
 	timerText += d.String()
 	timerText += " / "
-	timerText += m.sessionTimeLimitSeconds.Round(time.Second).String()
+	timerText += m.timeLimit.Round(time.Second).String()
 
-	var rendered = inputStyle.Render(fmt.Sprintf("session length %s", m.sessionTimeLimitInput.View())) + "\n" + timerStyle.Render(timerText)
-	return rendered
+	return timerStyle.Render(timerText)
+}
 
-	// return lipgloss.Place(100, 22, lipgloss.Center, lipgloss.Center, rendered)
+func (m Model) inputView() string {
+	var inputStyle = lipgloss.NewStyle().
+		Bold(true).
+		PaddingLeft(4)
+
+	return inputStyle.Render(
+		fmt.Sprintf(
+			"session length %s", m.timeLimitInput.View()) +
+			"\n" +
+			fmt.Sprintf("break length % s", m.breakLimitInput.View()))
+}
+
+func (m Model) View() string {
+	if m.sessionRunning {
+		return m.runningSessionView()
+	}
+
+	return m.inputView()
 }
