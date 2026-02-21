@@ -25,7 +25,47 @@ func (m Model) runningSessionView() string {
 }
 
 func (m Model) endView() string {
-	return "Done"
+	checkStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("46")).
+		PaddingLeft(2)
+
+	infoStyle := lipgloss.NewStyle().
+		Faint(true).
+		PaddingLeft(4)
+
+	startTime := m.sessionStart.Format("3:04 PM")
+	endTime := m.sessionEnd.Format("3:04 PM")
+
+	duration := m.sessionEnd.Sub(m.sessionStart).Round(time.Second)
+	durationStr := formatDuration(duration)
+
+	checkLine := checkStyle.Render("✓ Session completed")
+	timeLine := infoStyle.Render(fmt.Sprintf("Started: %s  →  Ended: %s", startTime, endTime))
+	durationLine := infoStyle.Render(fmt.Sprintf("Duration: %s", durationStr))
+
+	return checkLine + "\n" + timeLine + "\n" + durationLine
+}
+
+func formatDuration(d time.Duration) string {
+	d = d.Round(time.Second)
+	hours := int(d.Hours())
+	minutes := int(d.Minutes()) % 60
+	seconds := int(d.Seconds()) % 60
+
+	if hours > 0 {
+		if seconds > 0 {
+			return fmt.Sprintf("%dh %dm %ds", hours, minutes, seconds)
+		}
+		return fmt.Sprintf("%dh %dm", hours, minutes)
+	}
+	if minutes > 0 {
+		if seconds > 0 {
+			return fmt.Sprintf("%dm %ds", minutes, seconds)
+		}
+		return fmt.Sprintf("%dm", minutes)
+	}
+	return fmt.Sprintf("%ds", seconds)
 }
 
 func (m Model) inputView() string {

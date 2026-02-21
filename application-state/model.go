@@ -18,6 +18,7 @@ const (
 type Model struct {
 	programState appState
 	sessionStart time.Time
+	sessionEnd   time.Time
 	timeLimit    time.Duration
 	breakLimit   time.Duration
 
