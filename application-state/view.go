@@ -38,6 +38,8 @@ func (m Model) runningSessionView() string {
 		Foreground(lipgloss.Color("241")).
 		Align(lipgloss.Center)
 
+	var breakTextStyle = lipgloss.NewStyle().Faint(true).Foreground(lipgloss.Color("242")).Align(lipgloss.Center)
+
 	d := time.Since(m.sessionStart) - m.pausedDuration
 	d = d.Round(time.Second)
 
@@ -47,19 +49,20 @@ func (m Model) runningSessionView() string {
 	}
 	timerText += d.String()
 	timerText += " / "
-	timerText += m.timeLimit.Round(time.Second).String()
-	timerText += "\n"
-	timerText += fmt.Sprintf("[break: %s]", m.breakLimit.Round(time.Second).String())
+	timerText += formatDuration(m.timeLimit.Round(time.Second))
 
 	keybinds := "p: pause · q: quit"
 	if m.isPaused {
 		keybinds = "p: resume · q: quit"
 	}
 
+	breakText := fmt.Sprintf(" - (break: %s)", formatDuration(m.breakLimit))
+
 	timer := timerStyle.Render(timerText)
 	hints := keybindStyle.Render(keybinds)
+	breakUI := breakTextStyle.Render(breakText)
 
-	content := timer + "\n\n" + hints
+	content := timer + breakUI + "\n" + hints
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
 
