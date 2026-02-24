@@ -128,6 +128,13 @@ func (m Model) endStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
+
+		case "r":
+			m.programState = sessionRunningState
+			m.sessionStart = time.Now()
+			m.isPaused = false
+			m.pausedDuration = 0 * time.Second
+			return m, doTick()
 		}
 	}
 

@@ -122,7 +122,7 @@ func endStateKeybindsUI() string {
 		Foreground(lipgloss.Color("241")).
 		Align(lipgloss.Center)
 
-	keybinds := "q: quit"
+	keybinds := "r: restart · q: quit"
 
 	return keybindStyle.Render(keybinds)
 }
