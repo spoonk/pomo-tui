@@ -71,7 +71,7 @@ func TestParseMins(t *testing.T) {
 
 // TestInputStateUpdate_Quit tests that quit keys work in input state
 func TestInputStateUpdate_Quit(t *testing.T) {
-	m := InitialModel()
+	m := InitialModel(nil)
 
 	tests := []struct {
 		name string
@@ -130,7 +130,7 @@ func TestInputStateUpdate_Navigation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := InitialModel()
+			m := InitialModel(nil)
 
 			// Set initial focus
 			if tt.initialFocus {
@@ -165,7 +165,7 @@ func TestInputStateUpdate_Navigation(t *testing.T) {
 
 // TestInputStateUpdate_StartSession tests transition from input to running state
 func TestInputStateUpdate_StartSession(t *testing.T) {
-	m := InitialModel()
+	m := InitialModel(nil)
 	m.timeLimitInput.Blur()
 	m.breakLimitInput.Focus()
 
@@ -197,7 +197,7 @@ func TestInputStateUpdate_StartSession(t *testing.T) {
 
 // TestInputStateUpdate_EnterOnTimeInput tests that enter on time input moves to break input
 func TestInputStateUpdate_EnterOnTimeInput(t *testing.T) {
-	m := InitialModel()
+	m := InitialModel(nil)
 	assert.True(t, m.timeLimitInput.Focused(), "time input should start focused")
 
 	msg := tea.KeyMsg{Type: tea.KeyEnter}
@@ -214,7 +214,7 @@ func TestInputStateUpdate_EnterOnTimeInput(t *testing.T) {
 
 // TestTimerStateUpdate_Completion tests timer completion transition
 func TestTimerStateUpdate_Completion(t *testing.T) {
-	m := InitialModel()
+	m := InitialModel(nil)
 	m.programState = sessionRunningState
 	m.sessionStart = time.Now().Add(-26 * time.Minute) // Started 26 minutes ago
 	m.timeLimit = 25 * time.Minute
@@ -239,7 +239,7 @@ func TestTimerStateUpdate_Completion(t *testing.T) {
 
 // TestTimerStateUpdate_StillRunning tests that timer continues when time remains
 func TestTimerStateUpdate_StillRunning(t *testing.T) {
-	m := InitialModel()
+	m := InitialModel(nil)
 	m.programState = sessionRunningState
 	m.sessionStart = time.Now().Add(-5 * time.Minute) // Started 5 minutes ago
 	m.timeLimit = 25 * time.Minute
@@ -270,7 +270,7 @@ func TestUpdate_WindowSize(t *testing.T) {
 
 	for _, tt := range states {
 		t.Run(tt.name, func(t *testing.T) {
-			m := InitialModel()
+			m := InitialModel(nil)
 			m.programState = tt.state
 
 			msg := tea.WindowSizeMsg{Width: 120, Height: 40}
@@ -286,7 +286,7 @@ func TestUpdate_WindowSize(t *testing.T) {
 
 // TestEndStateUpdate_Quit tests that quit keys work in end state
 func TestEndStateUpdate_Quit(t *testing.T) {
-	m := InitialModel()
+	m := InitialModel(nil)
 	m.programState = sessionEndedState
 
 	tests := []struct {
@@ -312,7 +312,7 @@ func TestEndStateUpdate_Quit(t *testing.T) {
 
 // TestTimerStateUpdate_Pause tests that pressing 'p' pauses the timer
 func TestTimerStateUpdate_Pause(t *testing.T) {
-	m := InitialModel()
+	m := InitialModel(nil)
 	m.programState = sessionRunningState
 	m.sessionStart = time.Now().Add(-5 * time.Minute)
 	m.timeLimit = 25 * time.Minute
@@ -337,7 +337,7 @@ func TestTimerStateUpdate_Pause(t *testing.T) {
 
 // TestTimerStateUpdate_Resume tests that pressing 'p' while paused resumes the timer
 func TestTimerStateUpdate_Resume(t *testing.T) {
-	m := InitialModel()
+	m := InitialModel(nil)
 	m.programState = sessionRunningState
 	m.sessionStart = time.Now().Add(-5 * time.Minute)
 	m.timeLimit = 25 * time.Minute
@@ -363,7 +363,7 @@ func TestTimerStateUpdate_Resume(t *testing.T) {
 
 // TestTimerStateUpdate_PausedTick tests that tick messages are ignored when paused
 func TestTimerStateUpdate_PausedTick(t *testing.T) {
-	m := InitialModel()
+	m := InitialModel(nil)
 	m.programState = sessionRunningState
 	m.sessionStart = time.Now().Add(-5 * time.Minute)
 	m.timeLimit = 25 * time.Minute
@@ -386,7 +386,7 @@ func TestTimerStateUpdate_PausedTick(t *testing.T) {
 
 // TestTimerStateUpdate_CompletionWithPause tests timer completion accounting for paused time
 func TestTimerStateUpdate_CompletionWithPause(t *testing.T) {
-	m := InitialModel()
+	m := InitialModel(nil)
 	m.programState = sessionRunningState
 	m.sessionStart = time.Now().Add(-30 * time.Minute) // Started 30 minutes ago
 	m.timeLimit = 25 * time.Minute

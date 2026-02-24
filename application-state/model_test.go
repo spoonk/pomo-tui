@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestInitialModel verifies that InitialModel() creates a properly initialized model
+// TestInitialModel verifies that InitialModel(nil) creates a properly initialized model
 func TestInitialModel(t *testing.T) {
-	m := InitialModel()
+	m := InitialModel(nil)
 
 	// Check initial state
 	assert.Equal(t, initialState, m.programState, "should start in initialState")

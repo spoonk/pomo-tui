@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"pomo-tui/storage"
 )
 
 type appState int
@@ -35,9 +36,13 @@ type Model struct {
 	timeLimitInput  textinput.Model
 	breakLimitInput textinput.Model
 	spinner         spinner.Model
+
+	// store is injected at construction time. It may be nil if the database
+	// could not be opened
+	store storage.Store
 }
 
-func InitialModel() Model {
+func InitialModel(store storage.Store) Model {
 	sessionInput := textinput.New()
 	sessionInput.Focus()
 	sessionInput.Prompt = ""
@@ -66,6 +71,7 @@ func InitialModel() Model {
 		timeLimitInput:  sessionInput,
 		breakLimitInput: breakInput,
 		spinner:         s,
+		store:           store,
 	}
 }
 

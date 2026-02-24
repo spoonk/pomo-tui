@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"pomo-tui/storage"
 )
 
 type changeState string
@@ -94,7 +95,8 @@ func (m Model) timerStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if d.Minutes() >= m.timeLimit.Minutes() {
 			m.sessionEnd = time.Now()
 			m.programState = sessionEndedState
-			return m, nil // do nothing
+			m.persistSession()
+			return m, nil
 		}
 
 		return m, doTick()
@@ -124,6 +126,22 @@ func (m Model) endStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, cmd
+}
+
+func (m Model) persistSession() {
+	if m.store == nil {
+		return
+	}
+	activeDuration := m.sessionEnd.Sub(m.sessionStart) - m.pausedDuration
+	session := &storage.Session{
+		StartedAt:       m.sessionStart.UTC(),
+		EndedAt:         m.sessionEnd.UTC(),
+		DurationSeconds: int64(activeDuration.Seconds()),
+		PlannedSeconds:  int64(m.timeLimit.Seconds()),
+	}
+	// Intentionally ignoring the error for now; the TUI stays usable even if
+	// persistence fails. TODO: surface errors in endView if desired.
+	_ = m.store.SaveSession(session)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
