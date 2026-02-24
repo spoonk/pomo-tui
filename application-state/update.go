@@ -96,9 +96,8 @@ func (m Model) timerStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		d := time.Since(m.sessionStart) - m.pausedDuration
-		d = d.Round(time.Second)
 
-		if d.Minutes() >= m.timeLimit.Minutes() {
+		if d >= m.timeLimit {
 			m.sessionEnd = time.Now()
 			m.programState = sessionCompleteState
 			m.persistSession()
@@ -156,7 +155,6 @@ func (m Model) persistSession() {
 	// persistence fails. TODO: surface errors in endView if desired.
 	_ = m.store.SaveSession(session)
 }
-
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// universal messages
