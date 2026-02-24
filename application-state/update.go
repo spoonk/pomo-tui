@@ -4,9 +4,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/charmbracelet/bubbles/spinner"
-	tea "github.com/charmbracelet/bubbletea"
 	"pomo-tui/storage"
+
+	"github.com/charmbracelet/bubbles/spinner"
+	"github.com/charmbracelet/bubbles/textinput"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 type changeState string
@@ -134,6 +136,9 @@ func (m Model) endStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.isPaused = false
 			m.pausedDuration = 0 * time.Second
 			return m, doTick()
+		case "e":
+			m.programState = editTimerState
+			return m, textinput.Blink
 		}
 	}
 
@@ -165,7 +170,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	switch m.programState {
-	case initialState:
+	case editTimerState:
 		return m.inputStateUpdate(msg)
 	case sessionRunningState:
 		return m.timerStateUpdate(msg)

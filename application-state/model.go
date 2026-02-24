@@ -14,7 +14,7 @@ import (
 type appState int
 
 const (
-	initialState appState = iota
+	editTimerState appState = iota
 	sessionRunningState
 	sessionCompleteState
 	sessionEndedEarlyState
@@ -66,7 +66,7 @@ func InitialModel(store storage.Store) Model {
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 
 	return Model{
-		programState:    initialState,
+		programState:    editTimerState,
 		sessionStart:    time.Now(),
 		timeLimit:       25 * time.Minute,
 		breakLimit:      5 * time.Minute,

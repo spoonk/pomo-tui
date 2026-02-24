@@ -94,9 +94,9 @@ func (m Model) completedView() string {
 func (m Model) stoppedEarlyView() string {
 	checkStyle := lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color("202"))
+		Foreground(lipgloss.Color("#E69875"))
 
-	checkLine := checkStyle.Render("⏺ Session stopped early")
+	checkLine := checkStyle.Render("⏺  Session stopped early")
 	infoLine := elapsedTimeUI(m)
 	keybinds := endStateKeybindsUI()
 	list := sessionListUI(m)
@@ -136,7 +136,7 @@ func sessionListUI(m Model) string {
 		Foreground(lipgloss.Color("#A7C080"))
 
 	stoppedStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("202"))
+		Foreground(lipgloss.Color("#E69875"))
 
 	var rows []string
 	for _, s := range sessions {
@@ -167,7 +167,7 @@ func endStateKeybindsUI() string {
 		Foreground(lipgloss.Color("241")).
 		Align(lipgloss.Center)
 
-	keybinds := "r: restart · q: quit"
+	keybinds := "r: restart · e: edit duration · q: quit"
 
 	return keybindStyle.Render(keybinds)
 }
@@ -195,7 +195,7 @@ func formatDuration(d time.Duration) string {
 
 func (m Model) View() string {
 	switch m.programState {
-	case initialState:
+	case editTimerState:
 		return m.inputView()
 
 	case sessionRunningState:
