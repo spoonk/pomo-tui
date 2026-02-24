@@ -205,7 +205,7 @@ func TestInputStateUpdate_EnterOnTimeInput(t *testing.T) {
 	m = updatedModel.(Model)
 
 	// Should still be in initial state
-	assert.Equal(t, initialState, m.programState, "should remain in initialState")
+	assert.Equal(t, editTimerState, m.programState, "should remain in initialState")
 
 	// Should have moved focus to break input
 	assert.False(t, m.timeLimitInput.Focused(), "time input should no longer be focused")
@@ -263,7 +263,7 @@ func TestUpdate_WindowSize(t *testing.T) {
 		name  string
 		state appState
 	}{
-		{"initial state", initialState},
+		{"initial state", editTimerState},
 		{"running state", sessionRunningState},
 		{"ended state", sessionCompleteState},
 	}
