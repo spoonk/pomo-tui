@@ -87,7 +87,7 @@ func (m Model) completedView() string {
 	keybinds := endStateKeybindsUI()
 	list := sessionListUI(m)
 
-	content := checkLine + "\n" + infoLine + "\n\n" + list + "\n" + keybinds
+	content := checkLine + "\n" + infoLine + "\n" + keybinds + "\n\n" + list
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
 
@@ -101,7 +101,7 @@ func (m Model) stoppedEarlyView() string {
 	keybinds := endStateKeybindsUI()
 	list := sessionListUI(m)
 
-	content := checkLine + "\n" + infoLine + "\n\n" + list + "\n" + keybinds
+	content := checkLine + "\n" + infoLine + "\n" + keybinds + "\n\n" + list
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
 
@@ -119,6 +119,7 @@ func elapsedTimeUI(m Model) string {
 	return infoStyle.Render(fmt.Sprintf("%s  >  %s (%s)", startTime, endTime, durationStr))
 }
 
+// Currently not feeling the spark of beauty from this :(
 func sessionListUI(m Model) string {
 	if m.store == nil {
 		return ""
@@ -154,7 +155,7 @@ func sessionListUI(m Model) string {
 		}
 
 		timeStr := s.StartedAt.Local().Format("3:04 PM")
-		row := fmt.Sprintf("%s  %s  %s", icon, timeStr, blockStyle.Render(durationStr))
+		row := fmt.Sprintf("%s  %s  %s", icon, timeStr, blockStyle.Render(fmt.Sprintf("(%s)", durationStr)))
 		rows = append(rows, row)
 	}
 
