@@ -81,20 +81,11 @@ func (m Model) completedView() string {
 		Bold(true).
 		Foreground(lipgloss.Color("#A7C080"))
 
-	infoStyle := lipgloss.NewStyle().
-		Faint(true).
-		PaddingLeft(2)
-
-	startTime := m.sessionStart.Format("3:04 PM")
-	endTime := m.sessionEnd.Format("3:04 PM")
-
-	duration := m.sessionEnd.Sub(m.sessionStart).Round(time.Second)
-	durationStr := formatDuration(duration)
-
 	checkLine := checkStyle.Render("✓ Session complete")
-	timeLine := infoStyle.Render(fmt.Sprintf("%s  >  %s (%s)", startTime, endTime, durationStr))
+	infoLine := elapsedTimeUI(m)
+	keybinds := endStateKeybindsUI()
 
-	content := checkLine + "\n" + timeLine
+	content := checkLine + "\n" + infoLine + "\n" + keybinds
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
 
@@ -105,13 +96,13 @@ func (m Model) stoppedEarlyView() string {
 
 	checkLine := checkStyle.Render("⏺ Session stopped early")
 	infoLine := elapsedTimeUI(m)
+	keybinds := endStateKeybindsUI()
 
-	content := checkLine + "\n" + infoLine
+	content := checkLine + "\n" + infoLine + "\n" + keybinds
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
 
 func elapsedTimeUI(m Model) string {
-
 	infoStyle := lipgloss.NewStyle().
 		Faint(true).
 		PaddingLeft(2)
@@ -123,6 +114,17 @@ func elapsedTimeUI(m Model) string {
 	durationStr := formatDuration(duration)
 
 	return infoStyle.Render(fmt.Sprintf("%s  >  %s (%s)", startTime, endTime, durationStr))
+}
+
+func endStateKeybindsUI() string {
+	var keybindStyle = lipgloss.NewStyle().
+		Faint(true).
+		Foreground(lipgloss.Color("241")).
+		Align(lipgloss.Center)
+
+	keybinds := "q: quit"
+
+	return keybindStyle.Render(keybinds)
 }
 
 func formatDuration(d time.Duration) string {
