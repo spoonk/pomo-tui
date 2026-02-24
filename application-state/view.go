@@ -134,10 +134,10 @@ func sessionListUI(m Model) string {
 		Foreground(lipgloss.Color("241"))
 
 	completedStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#A7C080"))
+		Foreground(lipgloss.Color("#A7C080")).Faint(true)
 
 	stoppedStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#E69875"))
+		Foreground(lipgloss.Color("#E69875")).Faint(true)
 
 	var rows []string
 	for _, s := range sessions {
