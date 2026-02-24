@@ -112,9 +112,9 @@ func sessionListUI(m Model) string {
 			icon = stoppedStyle.Render("⏺")
 		}
 
-		iconCell := lipgloss.NewStyle().Width(2).Render(icon)
-		timeCell := dimStyle.Width(maxTimeWidth + 1).Render(r.timeStr)
-		durCell := dimStyle.Render(fmt.Sprintf("(%s)", r.durStr))
+		iconCell := lipgloss.NewStyle().Width(3).Render(icon)
+		timeCell := dimStyle.Width(maxTimeWidth + 2).Render(r.timeStr)
+		durCell := dimStyle.Width(maxDurWidth + len("()")).Render(fmt.Sprintf("(%s)", r.durStr))
 
 		line := lipgloss.JoinHorizontal(lipgloss.Top, iconCell, timeCell, durCell)
 		lines = append(lines, line)
