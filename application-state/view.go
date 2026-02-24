@@ -63,7 +63,7 @@ func (m Model) runningSessionView() string {
 
 	keybinds := "p: pause · x: stop early · q: quit"
 	if m.isPaused {
-		keybinds = "p: resume · q: quit"
+		keybinds = "p: resume · x: stop early · q: quit"
 	}
 
 	breakText := fmt.Sprintf(" - (break: %s)", formatDuration(m.breakLimit))

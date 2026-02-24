@@ -138,6 +138,8 @@ func (m Model) endStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, doTick()
 		case "e":
 			m.programState = editTimerState
+			m.isPaused = false
+			m.pausedDuration = 0 * time.Second
 			return m, textinput.Blink
 		}
 	}
