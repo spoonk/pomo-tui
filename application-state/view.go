@@ -2,6 +2,7 @@ package applicationstate
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	lipgloss "github.com/charmbracelet/lipgloss"
@@ -84,8 +85,9 @@ func (m Model) completedView() string {
 	checkLine := checkStyle.Render("✓ Session complete")
 	infoLine := elapsedTimeUI(m)
 	keybinds := endStateKeybindsUI()
+	list := sessionListUI(m)
 
-	content := checkLine + "\n" + infoLine + "\n" + keybinds
+	content := checkLine + "\n" + infoLine + "\n\n" + list + "\n" + keybinds
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
 
@@ -97,8 +99,9 @@ func (m Model) stoppedEarlyView() string {
 	checkLine := checkStyle.Render("⏺ Session stopped early")
 	infoLine := elapsedTimeUI(m)
 	keybinds := endStateKeybindsUI()
+	list := sessionListUI(m)
 
-	content := checkLine + "\n" + infoLine + "\n" + keybinds
+	content := checkLine + "\n" + infoLine + "\n\n" + list + "\n" + keybinds
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
 
@@ -114,6 +117,48 @@ func elapsedTimeUI(m Model) string {
 	durationStr := formatDuration(duration)
 
 	return infoStyle.Render(fmt.Sprintf("%s  >  %s (%s)", startTime, endTime, durationStr))
+}
+
+func sessionListUI(m Model) string {
+	if m.store == nil {
+		return ""
+	}
+	sessions := m.store.GetSessions()
+	if len(sessions) == 0 {
+		return ""
+	}
+
+	blockStyle := lipgloss.NewStyle().
+		Faint(true).
+		Foreground(lipgloss.Color("241"))
+
+	completedStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#A7C080"))
+
+	stoppedStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("202"))
+
+	var rows []string
+	for _, s := range sessions {
+		duration := time.Duration(s.DurationSeconds) * time.Second
+		planned := time.Duration(s.PlannedSeconds) * time.Second
+		completed := s.DurationSeconds >= s.PlannedSeconds
+
+		var icon, durationStr string
+		if completed {
+			icon = completedStyle.Render("✓")
+			durationStr = formatDuration(planned)
+		} else {
+			icon = stoppedStyle.Render("⏺")
+			durationStr = formatDuration(duration)
+		}
+
+		timeStr := s.StartedAt.Local().Format("3:04 PM")
+		row := fmt.Sprintf("%s  %s  %s", icon, timeStr, blockStyle.Render(durationStr))
+		rows = append(rows, row)
+	}
+
+	return strings.Join(rows, "\n")
 }
 
 func endStateKeybindsUI() string {

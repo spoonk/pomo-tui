@@ -227,7 +227,7 @@ func TestTimerStateUpdate_Completion(t *testing.T) {
 	m = updatedModel.(Model)
 
 	// Should transition to ended state
-	assert.Equal(t, sessionEndedState, m.programState, "should transition to sessionEndedState")
+	assert.Equal(t, sessionCompleteState, m.programState, "should transition to sessionEndedState")
 
 	// Should set end time
 	assert.WithinDuration(t, endTime, m.sessionEnd, 1*time.Second,
@@ -265,7 +265,7 @@ func TestUpdate_WindowSize(t *testing.T) {
 	}{
 		{"initial state", initialState},
 		{"running state", sessionRunningState},
-		{"ended state", sessionEndedState},
+		{"ended state", sessionCompleteState},
 	}
 
 	for _, tt := range states {
@@ -287,7 +287,7 @@ func TestUpdate_WindowSize(t *testing.T) {
 // TestEndStateUpdate_Quit tests that quit keys work in end state
 func TestEndStateUpdate_Quit(t *testing.T) {
 	m := InitialModel(nil)
-	m.programState = sessionEndedState
+	m.programState = sessionCompleteState
 
 	tests := []struct {
 		name string
@@ -343,7 +343,7 @@ func TestTimerStateUpdate_Resume(t *testing.T) {
 	m.timeLimit = 25 * time.Minute
 	m.isPaused = true
 	m.pausedAt = time.Now().Add(-2 * time.Minute) // Paused 2 minutes ago
-	m.pausedDuration = 1 * time.Minute             // Already had 1 minute paused
+	m.pausedDuration = 1 * time.Minute            // Already had 1 minute paused
 
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("p")}
 
@@ -411,6 +411,6 @@ func TestTimerStateUpdate_CompletionWithPause(t *testing.T) {
 	m = updatedModel.(Model)
 
 	// Should transition to ended state
-	assert.Equal(t, sessionEndedState, m.programState, "should transition to sessionEndedState")
+	assert.Equal(t, sessionCompleteState, m.programState, "should transition to sessionEndedState")
 	assert.Nil(t, cmd, "should not return a command after completion")
 }

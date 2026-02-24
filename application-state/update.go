@@ -157,6 +157,7 @@ func (m Model) persistSession() {
 	_ = m.store.SaveSession(session)
 }
 
+
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// universal messages
 	switch msg := msg.(type) {
