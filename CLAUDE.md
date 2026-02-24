@@ -31,10 +31,12 @@ The application uses the **Elm Architecture** via Bubble Tea:
 
 ### State Machine
 
-Three distinct program states (appState enum):
+Five distinct program states (appState enum):
 - **initialState**: User inputs session and break lengths
 - **sessionRunningState**: Timer actively counting up (can be paused/resumed)
-- **sessionEndedState**: Session complete, showing summary
+- **sessionCompleteState**: Timer reached the full planned duration
+- **sessionEndedEarlyState**: User stopped the session early with `x`
+- **sessionEndedCanceledState**: Reserved (unused)
 
 The running state supports pause/resume functionality via the `isPaused` flag. When paused, tick messages are ignored and the `pausedDuration` accumulates time spent paused, which is subtracted from elapsed time calculations.
 
@@ -62,11 +64,22 @@ The running state supports pause/resume functionality via the `isPaused` flag. W
   - Main `View()` dispatcher renders appropriate state
   - `inputView()` renders session/break input screen with focus indicators
   - `runningSessionView()` renders active timer display with pause indicator and keybind hints
-  - `endView()` renders completion screen with time summary
+  - `completedView()` / `stoppedEarlyView()` render the end screen with time summary
+  - `elapsedTimeUI()` shows start/end times and total duration
+  - `sessionListUI()` renders the historical session list from the store
   - `formatDuration()` formats time.Duration into readable strings
   - Elapsed time calculation accounts for `pausedDuration` to show accurate progress
 
-**main.go**: Entry point that instantiates and runs the Bubble Tea program
+**storage package** handles SQLite persistence via GORM:
+
+- **session.go**: `Session` GORM model with fields `ID`, `StartedAt`, `EndedAt`, `DurationSeconds` (active time, pauses excluded), `PlannedSeconds`
+- **store.go**:
+  - `Store` interface with `SaveSession()`, `GetSessions()`, `Close()`
+  - `sqliteStore` implementation backed by GORM/SQLite
+  - `Open()` constructor — creates DB at `~/.local/share/pomo-tui/sessions.db` (XDG convention), runs `AutoMigrate`
+  - GORM driver: `gorm.io/driver/sqlite` (requires CGO / mattn/go-sqlite3)
+
+**main.go**: Entry point — calls `storage.Open()`, injects the store into `InitialModel(store)`, and runs the Bubble Tea program. If `Open()` fails, `store` is nil and the TUI runs without persistence.
 
 ### Key Patterns
 
