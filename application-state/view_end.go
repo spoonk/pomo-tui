@@ -50,7 +50,6 @@ func elapsedTimeUI(m Model) string {
 	return infoStyle.Render(fmt.Sprintf("%s  >  %s (%s)", startTime, endTime, durationStr))
 }
 
-// Currently not feeling the spark of beauty from this :(
 func sessionListUI(m Model) string {
 	if m.store == nil {
 		return ""
@@ -60,7 +59,7 @@ func sessionListUI(m Model) string {
 		return ""
 	}
 
-	blockStyle := lipgloss.NewStyle().
+	dimStyle := lipgloss.NewStyle().
 		Faint(true).
 		Foreground(lipgloss.Color("241"))
 
@@ -70,27 +69,58 @@ func sessionListUI(m Model) string {
 	stoppedStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#E69875")).Faint(true)
 
-	var rows []string
-	for _, s := range sessions {
+	type rowData struct {
+		completed bool
+		timeStr   string
+		durStr    string
+	}
+
+	rows := make([]rowData, len(sessions))
+	maxTimeWidth := 0
+	maxDurWidth := 0
+
+	for i, s := range sessions {
 		duration := time.Duration(s.DurationSeconds) * time.Second
 		planned := time.Duration(s.PlannedSeconds) * time.Second
 		completed := s.DurationSeconds >= s.PlannedSeconds
 
-		var icon, durationStr string
+		var durStr string
 		if completed {
-			icon = completedStyle.Render("✓")
-			durationStr = formatDuration(planned)
+			durStr = formatDuration(planned)
 		} else {
-			icon = stoppedStyle.Render("⏺")
-			durationStr = formatDuration(duration)
+			durStr = formatDuration(duration)
 		}
 
 		timeStr := s.StartedAt.Local().Format("3:04 PM")
-		row := fmt.Sprintf("%s  %s  %s", icon, timeStr, blockStyle.Render(fmt.Sprintf("(%s)", durationStr)))
-		rows = append(rows, row)
+
+		if len(timeStr) > maxTimeWidth {
+			maxTimeWidth = len(timeStr)
+		}
+		if len(durStr) > maxDurWidth {
+			maxDurWidth = len(durStr)
+		}
+
+		rows[i] = rowData{completed: completed, timeStr: timeStr, durStr: durStr}
 	}
 
-	return strings.Join(rows, "\n")
+	var lines []string
+	for _, r := range rows {
+		var icon string
+		if r.completed {
+			icon = completedStyle.Render("✓")
+		} else {
+			icon = stoppedStyle.Render("⏺")
+		}
+
+		iconCell := lipgloss.NewStyle().Width(4).Render(icon)
+		timeCell := dimStyle.Width(maxTimeWidth + 3).Render(r.timeStr)
+		durCell := dimStyle.Render(fmt.Sprintf("(%s)", r.durStr))
+
+		line := lipgloss.JoinHorizontal(lipgloss.Top, iconCell, timeCell, durCell)
+		lines = append(lines, line)
+	}
+
+	return strings.Join(lines, "\n")
 }
 
 func endStateKeybindsUI() string {
