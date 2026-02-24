@@ -16,7 +16,9 @@ type appState int
 const (
 	initialState appState = iota
 	sessionRunningState
-	sessionEndedState
+	sessionCompleteState
+	sessionEndedEarlyState
+	sessionEndedCanceledState
 )
 
 type Model struct {

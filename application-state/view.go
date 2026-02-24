@@ -60,7 +60,7 @@ func (m Model) runningSessionView() string {
 	timerText += " / "
 	timerText += formatDuration(m.timeLimit.Round(time.Second))
 
-	keybinds := "p: pause · q: quit"
+	keybinds := "p: pause · x: stop early · q: quit"
 	if m.isPaused {
 		keybinds = "p: resume · q: quit"
 	}
@@ -76,7 +76,7 @@ func (m Model) runningSessionView() string {
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
 
-func (m Model) endView() string {
+func (m Model) completedView() string {
 	checkStyle := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color("#A7C080"))
@@ -93,10 +93,36 @@ func (m Model) endView() string {
 
 	checkLine := checkStyle.Render("✓ Session complete")
 	timeLine := infoStyle.Render(fmt.Sprintf("%s  >  %s (%s)", startTime, endTime, durationStr))
-	// durationLine := infoStyle.Render(fmt.Sprintf("%s", durationStr))
 
 	content := checkLine + "\n" + timeLine
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
+}
+
+func (m Model) stoppedEarlyView() string {
+	checkStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("202"))
+
+	checkLine := checkStyle.Render("⏺ Session stopped early")
+	infoLine := elapsedTimeUI(m)
+
+	content := checkLine + "\n" + infoLine
+	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
+}
+
+func elapsedTimeUI(m Model) string {
+
+	infoStyle := lipgloss.NewStyle().
+		Faint(true).
+		PaddingLeft(2)
+
+	startTime := m.sessionStart.Format("3:04 PM")
+	endTime := m.sessionEnd.Format("3:04 PM")
+
+	duration := m.sessionEnd.Sub(m.sessionStart).Round(time.Second)
+	durationStr := formatDuration(duration)
+
+	return infoStyle.Render(fmt.Sprintf("%s  >  %s (%s)", startTime, endTime, durationStr))
 }
 
 func formatDuration(d time.Duration) string {
@@ -128,8 +154,13 @@ func (m Model) View() string {
 	case sessionRunningState:
 		return m.runningSessionView()
 
-	default:
-		return m.endView()
-	}
+	case sessionCompleteState:
+		return m.completedView()
 
+	case sessionEndedEarlyState:
+		return m.stoppedEarlyView()
+
+	default:
+		return m.completedView()
+	}
 }

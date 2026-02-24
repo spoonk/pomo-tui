@@ -81,6 +81,12 @@ func (m Model) timerStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.isPaused = true
 				return m, nil // stop ticking
 			}
+
+		case "x":
+			m.sessionEnd = time.Now()
+			m.programState = sessionEndedEarlyState
+			m.persistSession()
+			return m, nil
 		}
 
 	case tickMsg:
@@ -94,7 +100,7 @@ func (m Model) timerStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		if d.Minutes() >= m.timeLimit.Minutes() {
 			m.sessionEnd = time.Now()
-			m.programState = sessionEndedState
+			m.programState = sessionCompleteState
 			m.persistSession()
 			return m, nil
 		}
