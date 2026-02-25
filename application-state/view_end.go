@@ -131,6 +131,8 @@ func sessionGridUI(m Model) string {
 	stoppedStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#E69875")).Faint(true)
 
+	const columnsPerRow = 10
+
 	if m.store == nil {
 		return ""
 	}
@@ -143,6 +145,7 @@ func sessionGridUI(m Model) string {
 	var outputBuilder strings.Builder
 
 	pushed := 0
+	var fullRowWidth int
 
 	for _, s := range sessions {
 		completed := s.DurationSeconds >= s.PlannedSeconds
@@ -156,8 +159,12 @@ func sessionGridUI(m Model) string {
 		rowBuilder.WriteString(icon)
 		pushed++
 
-		if pushed == 10 {
-			outputBuilder.WriteString(rowBuilder.String() + "\n")
+		if pushed == columnsPerRow {
+			row := rowBuilder.String()
+			if fullRowWidth == 0 {
+				fullRowWidth = lipgloss.Width(row)
+			}
+			outputBuilder.WriteString(row + "\n")
 			rowBuilder.Reset()
 			pushed = 0
 		}
@@ -167,7 +174,11 @@ func sessionGridUI(m Model) string {
 		outputBuilder.WriteString(rowBuilder.String())
 	}
 
-	return outputBuilder.String()
+	if fullRowWidth == 0 {
+		fullRowWidth = lipgloss.Width(outputBuilder.String())
+	}
+
+	return lipgloss.NewStyle().Width(fullRowWidth).Render(outputBuilder.String())
 }
 
 func endStateKeybindsUI() string {
