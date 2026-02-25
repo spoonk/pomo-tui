@@ -16,7 +16,8 @@ func (m Model) completedView() string {
 	checkLine := checkStyle.Render("✓ Session complete")
 	infoLine := elapsedTimeUI(m)
 	keybinds := endStateKeybindsUI()
-	list := sessionListUI(m)
+	// list := sessionListUI(m)
+	list := sessionGridUI(m)
 
 	content := checkLine + "\n" + infoLine + "\n" + keybinds + "\n\n" + list
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
@@ -30,7 +31,7 @@ func (m Model) stoppedEarlyView() string {
 	checkLine := checkStyle.Render("⏺  Session stopped early")
 	infoLine := elapsedTimeUI(m)
 	keybinds := endStateKeybindsUI()
-	list := sessionListUI(m)
+	list := sessionGridUI(m)
 
 	content := checkLine + "\n" + infoLine + "\n" + keybinds + "\n\n" + list
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
@@ -121,6 +122,52 @@ func sessionListUI(m Model) string {
 	}
 
 	return strings.Join(lines, "\n")
+}
+
+func sessionGridUI(m Model) string {
+	completedStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#A7C080")).Faint(true)
+
+	stoppedStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#E69875")).Faint(true)
+
+	if m.store == nil {
+		return ""
+	}
+	sessions := m.store.GetSessions()
+	if len(sessions) == 0 {
+		return ""
+	}
+
+	var rowBuilder strings.Builder
+	var outputBuilder strings.Builder
+
+	pushed := 0
+
+	for _, s := range sessions {
+		completed := s.DurationSeconds >= s.PlannedSeconds
+
+		var icon string
+		if completed {
+			icon = completedStyle.Render("✓ ")
+		} else {
+			icon = stoppedStyle.Render("⏺ ")
+		}
+		rowBuilder.WriteString(icon)
+		pushed++
+
+		if pushed == 10 {
+			outputBuilder.WriteString(rowBuilder.String() + "\n")
+			rowBuilder.Reset()
+			pushed = 0
+		}
+	}
+
+	if pushed != 0 {
+		outputBuilder.WriteString(rowBuilder.String())
+	}
+
+	return outputBuilder.String()
 }
 
 func endStateKeybindsUI() string {
