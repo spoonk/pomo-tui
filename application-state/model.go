@@ -31,10 +31,6 @@ type Model struct {
 
 	sessionPauseTimer utils.PauseTimer
 
-	// isPaused       bool
-	// pausedAt       time.Time
-	// pausedDuration time.Duration
-
 	breakStart      time.Time
 	breakEnd        time.Time
 	breakPauseTimer utils.PauseTimer

@@ -83,7 +83,9 @@ func (m Model) timerStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "x":
 			m.sessionEnd = time.Now()
-			m.programState = sessionEndedEarlyState
+			m.breakStart = time.Now()
+			m.breakPauseTimer.Pause()
+			m.programState = breakState
 			m.persistSession()
 			return m, nil
 		}
@@ -113,6 +115,48 @@ func (m Model) timerStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
 		return m, cmd
+	}
+
+	return m, nil
+}
+
+func (m Model) breakStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+c", "q":
+			return m, tea.Quit
+
+		case "p":
+			if m.breakPauseTimer.IsPaused() {
+				m.breakPauseTimer.UnPause()
+				return m, doTick()
+			} else {
+				m.breakPauseTimer.Pause()
+				return m, nil // stop ticking
+			}
+
+		case "x":
+			m.breakEnd = time.Now()
+			m.programState = sessionEndedEarlyState
+			return m, nil
+		}
+
+	case tickMsg:
+		if m.breakPauseTimer.IsPaused() {
+			return m, nil
+		}
+
+		d := time.Since(m.breakStart) - m.breakPauseTimer.PausedDuration()
+
+		if d >= m.breakLimit {
+			m.breakEnd = time.Now()
+			m.programState = sessionCompleteState // TODO: new session here
+			// TODO: should I persist breaks or not?
+			return m, nil
+		}
+
+		return m, doTick()
 	}
 
 	return m, nil
@@ -171,6 +215,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.inputStateUpdate(msg)
 	case sessionRunningState:
 		return m.timerStateUpdate(msg)
+	case breakState:
+		return m.breakStateUpdate(msg)
+
 	default:
 		return m.endStateUpdate(msg)
 	}
