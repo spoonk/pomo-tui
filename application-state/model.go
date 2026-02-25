@@ -26,11 +26,12 @@ const (
 type Model struct {
 	programState appState
 
-	sessionStart time.Time
-	sessionEnd   time.Time
-
+	// TODO: pausable timer abstraction
+	sessionStart      time.Time
+	sessionEnd        time.Time
 	sessionPauseTimer utils.PauseTimer
 
+	// TODO: pausable timer abstraction
 	breakStart      time.Time
 	breakEnd        time.Time
 	breakPauseTimer utils.PauseTimer
