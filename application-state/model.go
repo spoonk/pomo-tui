@@ -9,6 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"pomo-tui/storage"
+	"pomo-tui/utils"
 )
 
 type appState int
@@ -19,18 +20,27 @@ const (
 	sessionCompleteState
 	sessionEndedEarlyState
 	sessionEndedCanceledState
+	breakState
 )
 
 type Model struct {
 	programState appState
+
 	sessionStart time.Time
 	sessionEnd   time.Time
-	timeLimit    time.Duration
-	breakLimit   time.Duration
 
-	isPaused       bool
-	pausedAt       time.Time
-	pausedDuration time.Duration
+	sessionPauseTimer utils.PauseTimer
+
+	// isPaused       bool
+	// pausedAt       time.Time
+	// pausedDuration time.Duration
+
+	breakStart      time.Time
+	breakEnd        time.Time
+	breakPauseTimer utils.PauseTimer
+
+	timeLimit  time.Duration
+	breakLimit time.Duration
 
 	width  int
 	height int
@@ -66,14 +76,16 @@ func InitialModel(store storage.Store) Model {
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 
 	return Model{
-		programState:    editTimerState,
-		sessionStart:    time.Now(),
-		timeLimit:       25 * time.Minute,
-		breakLimit:      5 * time.Minute,
-		timeLimitInput:  sessionInput,
-		breakLimitInput: breakInput,
-		spinner:         s,
-		store:           store,
+		programState:      editTimerState,
+		sessionStart:      time.Now(),
+		sessionPauseTimer: utils.NewPauseTimer(),
+		breakPauseTimer:   utils.NewPauseTimer(),
+		timeLimit:         25 * time.Minute,
+		breakLimit:        5 * time.Minute,
+		timeLimitInput:    sessionInput,
+		breakLimitInput:   breakInput,
+		spinner:           s,
+		store:             store,
 	}
 }
 

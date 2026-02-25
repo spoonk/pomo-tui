@@ -13,7 +13,7 @@ func TestInitialModel(t *testing.T) {
 	m := InitialModel(nil)
 
 	// Check initial state
-	assert.Equal(t, initialState, m.programState, "should start in initialState")
+	assert.Equal(t, editTimerState, m.programState, "should start in initialState")
 
 	// Check default time limits
 	assert.Equal(t, 25*time.Minute, m.timeLimit, "default session should be 25 minutes")

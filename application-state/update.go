@@ -72,15 +72,12 @@ func (m Model) timerStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case "p":
-			if m.isPaused {
+			if m.sessionPauseTimer.IsPaused() {
 				// Resume: accumulate the paused time
-				m.pausedDuration += time.Since(m.pausedAt)
-				m.isPaused = false
+				m.sessionPauseTimer.UnPause()
 				return m, doTick()
 			} else {
-				// Pause: record when we paused
-				m.pausedAt = time.Now()
-				m.isPaused = true
+				m.sessionPauseTimer.Pause()
 				return m, nil // stop ticking
 			}
 
@@ -93,11 +90,11 @@ func (m Model) timerStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tickMsg:
 		// Only process ticks if not paused
-		if m.isPaused {
+		if m.sessionPauseTimer.IsPaused() {
 			return m, nil
 		}
 
-		d := time.Since(m.sessionStart) - m.pausedDuration
+		d := time.Since(m.sessionStart) - m.sessionPauseTimer.PausedDuration()
 
 		if d >= m.timeLimit {
 			m.sessionEnd = time.Now()
@@ -109,7 +106,7 @@ func (m Model) timerStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, doTick()
 
 	case spinner.TickMsg:
-		if m.isPaused {
+		if m.sessionPauseTimer.IsPaused() {
 			return m, nil
 		}
 
@@ -133,13 +130,11 @@ func (m Model) endStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "r":
 			m.programState = sessionRunningState
 			m.sessionStart = time.Now()
-			m.isPaused = false
-			m.pausedDuration = 0 * time.Second
+			m.sessionPauseTimer.Reset()
 			return m, doTick()
 		case "e":
 			m.programState = editTimerState
-			m.isPaused = false
-			m.pausedDuration = 0 * time.Second
+			m.sessionPauseTimer.Reset()
 			return m, textinput.Blink
 		}
 	}
@@ -151,7 +146,7 @@ func (m Model) persistSession() {
 	if m.store == nil {
 		return
 	}
-	activeDuration := m.sessionEnd.Sub(m.sessionStart) - m.pausedDuration
+	activeDuration := m.sessionEnd.Sub(m.sessionStart) - m.sessionPauseTimer.PausedDuration()
 	session := &storage.Session{
 		StartedAt:       m.sessionStart.UTC(),
 		EndedAt:         m.sessionEnd.UTC(),

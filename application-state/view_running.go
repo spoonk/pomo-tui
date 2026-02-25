@@ -27,11 +27,11 @@ func (m Model) runningSessionView() string {
 		Foreground(lipgloss.Color("#A7C080")).
 		Align(lipgloss.Center)
 
-	d := time.Since(m.sessionStart) - m.pausedDuration
+	d := time.Since(m.sessionStart) - m.sessionPauseTimer.PausedDuration()
 	d = d.Round(time.Second)
 
 	pauseText := ""
-	if m.isPaused {
+	if m.sessionPauseTimer.IsPaused() {
 		pauseText += " ⏸︎   "
 	}
 	var timerText = ""
@@ -40,7 +40,7 @@ func (m Model) runningSessionView() string {
 	timerText += formatDuration(m.timeLimit.Round(time.Second))
 
 	keybinds := "p: pause · x: stop early · q: quit"
-	if m.isPaused {
+	if m.sessionPauseTimer.IsPaused() {
 		keybinds = "p: resume · x: stop early · q: quit"
 	}
 
