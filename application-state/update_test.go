@@ -184,11 +184,11 @@ func TestInputStateUpdate_StartSession(t *testing.T) {
 	assert.Equal(t, sessionRunningState, m.programState, "should transition to sessionRunningState")
 
 	// Check time limits were parsed
-	assert.Equal(t, 30*time.Minute, m.timeLimit, "should parse time limit from input")
-	assert.Equal(t, 10*time.Minute, m.breakLimit, "should parse break limit from input")
+	assert.Equal(t, 30*time.Minute, m.sessionTimer.GetTimeLimit(), "should parse time limit from input")
+	assert.Equal(t, 10*time.Minute, m.breakTimer.GetTimeLimit(), "should parse break limit from input")
 
 	// Check session start time
-	assert.WithinDuration(t, startTime, m.sessionStart, 1*time.Second,
+	assert.WithinDuration(t, startTime, m.sessionTimer.GetStartTime(), 1*time.Second,
 		"session start should be set to approximately now")
 
 	// Check that commands were batched
@@ -216,8 +216,8 @@ func TestInputStateUpdate_EnterOnTimeInput(t *testing.T) {
 func TestTimerStateUpdate_Completion(t *testing.T) {
 	m := InitialModel(nil)
 	m.programState = sessionRunningState
-	m.sessionStart = time.Now().Add(-26 * time.Minute) // Started 26 minutes ago
-	m.timeLimit = 25 * time.Minute
+	m.sessionTimer.OverrideStartTime(time.Now().Add(-26 * time.Minute)) // Started 26 minutes ago
+	m.sessionTimer.SetDuration(25 * time.Minute)
 
 	// Send a tick message
 	msg := tickMsg("tick")
@@ -230,7 +230,7 @@ func TestTimerStateUpdate_Completion(t *testing.T) {
 	assert.Equal(t, sessionCompleteState, m.programState, "should transition to sessionEndedState")
 
 	// Should set end time
-	assert.WithinDuration(t, endTime, m.sessionEnd, 1*time.Second,
+	assert.WithinDuration(t, endTime, m.sessionTimer.GetEndTime(), 1*time.Second,
 		"session end should be set to approximately now")
 
 	// Should not return a command (timer stops)
@@ -241,8 +241,8 @@ func TestTimerStateUpdate_Completion(t *testing.T) {
 func TestTimerStateUpdate_StillRunning(t *testing.T) {
 	m := InitialModel(nil)
 	m.programState = sessionRunningState
-	m.sessionStart = time.Now().Add(-5 * time.Minute) // Started 5 minutes ago
-	m.timeLimit = 25 * time.Minute
+	m.sessionTimer.OverrideStartTime(time.Now().Add(-5 * time.Minute)) // Started 5 minutes ago
+	m.sessionTimer.SetDuration(25 * time.Minute)
 
 	// Send a tick message
 	msg := tickMsg("tick")
@@ -314,9 +314,8 @@ func TestEndStateUpdate_Quit(t *testing.T) {
 func TestTimerStateUpdate_Pause(t *testing.T) {
 	m := InitialModel(nil)
 	m.programState = sessionRunningState
-	m.sessionStart = time.Now().Add(-5 * time.Minute)
-	m.timeLimit = 25 * time.Minute
-	m.sessionPauseTimer.Reset()
+	m.sessionTimer.OverrideStartTime(time.Now().Add(-5 * time.Minute))
+	m.sessionTimer.SetDuration(25 * time.Minute)
 
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("p")}
 	pauseTime := time.Now()
@@ -325,10 +324,10 @@ func TestTimerStateUpdate_Pause(t *testing.T) {
 	m = updatedModel.(Model)
 
 	// Should be paused
-	assert.True(t, m.sessionPauseTimer.IsPaused(), "should be paused after pressing 'p'")
+	assert.True(t, m.sessionTimer.IsPaused(), "should be paused after pressing 'p'")
 
 	// Should set pausedAt time
-	assert.WithinDuration(t, pauseTime, m.sessionPauseTimer.PausedAt(), 100*time.Millisecond,
+	assert.WithinDuration(t, pauseTime, m.sessionTimer.PausedAt(), 100*time.Millisecond,
 		"pausedAt should be set to approximately now")
 
 	// Should not return a tick command
@@ -339,12 +338,11 @@ func TestTimerStateUpdate_Pause(t *testing.T) {
 func TestTimerStateUpdate_Resume(t *testing.T) {
 	m := InitialModel(nil)
 	m.programState = sessionRunningState
-	m.sessionStart = time.Now().Add(-5 * time.Minute)
-	m.timeLimit = 25 * time.Minute
-	m.sessionPauseTimer.Pause()
-	m.sessionPauseTimer.
-		OverridePausedAt(time.Now().Add(-2 * time.Minute)).
-		OverridePauseDuration(1 * time.Minute)
+	m.sessionTimer.OverrideStartTime(time.Now().Add(-5 * time.Minute))
+	m.sessionTimer.SetDuration(25 * time.Minute)
+	m.sessionTimer.Pause()
+	m.sessionTimer.OverridePausedAt(time.Now().Add(-2 * time.Minute))
+	m.sessionTimer.OverridePausedDuration(1 * time.Minute)
 
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("p")}
 
@@ -352,10 +350,10 @@ func TestTimerStateUpdate_Resume(t *testing.T) {
 	m = updatedModel.(Model)
 
 	// Should no longer be paused
-	assert.False(t, m.sessionPauseTimer.IsPaused(), "should not be paused after pressing 'p' while paused")
+	assert.False(t, m.sessionTimer.IsPaused(), "should not be paused after pressing 'p' while paused")
 
 	// Should have accumulated the paused duration (1 min + 2 min)
-	assert.InDelta(t, 3*time.Minute, m.sessionPauseTimer.PausedDuration(), float64(1*time.Second),
+	assert.InDelta(t, 3*time.Minute, m.sessionTimer.PausedDuration(), float64(1*time.Second),
 		"pausedDuration should accumulate time spent paused")
 
 	// Should return a tick command to resume
@@ -366,9 +364,9 @@ func TestTimerStateUpdate_Resume(t *testing.T) {
 func TestTimerStateUpdate_PausedTick(t *testing.T) {
 	m := InitialModel(nil)
 	m.programState = sessionRunningState
-	m.sessionStart = time.Now().Add(-5 * time.Minute)
-	m.timeLimit = 25 * time.Minute
-	m.sessionPauseTimer.Pause()
+	m.sessionTimer.OverrideStartTime(time.Now().Add(-5 * time.Minute))
+	m.sessionTimer.SetDuration(25 * time.Minute)
+	m.sessionTimer.Pause()
 
 	msg := tickMsg("tick")
 
@@ -379,7 +377,7 @@ func TestTimerStateUpdate_PausedTick(t *testing.T) {
 	assert.Equal(t, sessionRunningState, m.programState, "should remain in sessionRunningState")
 
 	// Should still be paused
-	assert.True(t, m.sessionPauseTimer.IsPaused(), "should still be paused")
+	assert.True(t, m.sessionTimer.IsPaused(), "should still be paused")
 
 	// Should not return a command
 	assert.Nil(t, cmd, "should not return a command while paused")
@@ -389,9 +387,10 @@ func TestTimerStateUpdate_PausedTick(t *testing.T) {
 func TestTimerStateUpdate_CompletionWithPause(t *testing.T) {
 	m := InitialModel(nil)
 	m.programState = sessionRunningState
-	m.sessionStart = time.Now().Add(-30 * time.Minute) // Started 30 minutes ago
-	m.timeLimit = 25 * time.Minute
-	m.sessionPauseTimer.OverridePauseDuration(6 * time.Minute) // But 6 minutes were paused
+	m.sessionTimer.OverrideStartTime(time.Now().Add(-30 * time.Minute))
+	m.sessionTimer.SetDuration(25 * time.Minute)
+
+	m.sessionTimer.OverridePausedDuration(6 * time.Minute) // But 6 minutes were paused
 
 	// Effective time: 30 - 6 = 24 minutes (should NOT complete)
 	msg := tickMsg("tick")
@@ -404,7 +403,7 @@ func TestTimerStateUpdate_CompletionWithPause(t *testing.T) {
 	assert.NotNil(t, cmd, "should return a tick command to continue")
 
 	// Now test with more time elapsed
-	m.sessionStart = time.Now().Add(-32 * time.Minute) // Started 32 minutes ago
+	m.sessionTimer.OverrideStartTime(time.Now().Add(-32 * time.Minute)) // Started 32 minutes ago
 	// Effective time: 32 - 6 = 26 minutes (should complete)
 
 	updatedModel, cmd = m.timerStateUpdate(msg)

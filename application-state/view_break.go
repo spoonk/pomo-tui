@@ -29,24 +29,24 @@ func (m Model) breakView() string {
 		Foreground(lipgloss.Color("#A7C080")).
 		Align(lipgloss.Center)
 
-	d := time.Since(m.breakStart) - m.breakPauseTimer.PausedDuration()
+	d := m.breakTimer.GetUnpausedDuration()
 	d = d.Round(time.Second)
 
 	pauseText := ""
-	if m.breakPauseTimer.IsPaused() {
+	if m.breakTimer.IsPaused() {
 		pauseText += " ⏸︎   "
 	}
 	var timerText = ""
 	timerText += d.String()
 	timerText += " / "
-	timerText += formatDuration(m.breakLimit.Round(time.Second))
+	timerText += formatDuration(m.breakTimer.GetTimeLimit().Round(time.Second))
 
 	keybinds := "p: pause · x: stop early · q: quit"
-	if m.breakPauseTimer.IsPaused() {
+	if m.breakTimer.IsPaused() {
 		keybinds = "p: resume · x: stop early · q: quit"
 	}
 
-	sessionText := fmt.Sprintf(" - (session: %s)", formatDuration(m.timeLimit))
+	sessionText := fmt.Sprintf(" - (session: %s)", formatDuration(m.sessionTimer.GetTimeLimit()))
 
 	breakText := breakTextStyle.Render("[ break ]")
 	pause := pauseTextStyle.Render(pauseText)

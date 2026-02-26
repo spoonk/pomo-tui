@@ -9,20 +9,42 @@ type PausableTimer interface {
 	UnPause()
 	Reset()
 	Start()
+	GetStartTime() time.Time
+	GetEndTime() time.Time
 	GetTotalDuration() time.Duration
 	GetUnpausedDuration() time.Duration
 	SetDuration(newDuration time.Duration)
+	EndEarly()
 	IsExpired() bool
+	IsPaused() bool
+	OverrideStartTime(newStartTime time.Time)
+	OverridePausedDuration(newDuration time.Duration)
+	GetTimeLimit() time.Duration
+	PausedAt() time.Time
+	OverridePausedAt(time.Time)
+	PausedDuration() time.Duration
 }
 
 type pausableTimer struct {
-	pauseTimer      PauseTimer
-	sessionStart    time.Time
-	sessionDuration time.Duration
+	pauseTimer       PauseTimer
+	sessionStart     time.Time
+	sessionTimeLimit time.Duration
+	isTerminated     bool
+	terminatedAt     time.Time
 }
 
 func (p *pausableTimer) Pause() {
 	p.pauseTimer.Pause()
+}
+
+func (p *pausableTimer) EndEarly() {
+	p.isTerminated = true
+	p.terminatedAt = time.Now()
+	p.pauseTimer.UnPause()
+}
+
+func (p *pausableTimer) GetStartTime() time.Time {
+	return p.sessionStart
 }
 
 func (p *pausableTimer) UnPause() {
@@ -31,7 +53,7 @@ func (p *pausableTimer) UnPause() {
 
 func (p *pausableTimer) Reset() {
 	p.pauseTimer.Reset()
-	p.sessionDuration = 0 * time.Second
+	p.isTerminated = false
 }
 
 func (p *pausableTimer) Start() {
@@ -39,24 +61,74 @@ func (p *pausableTimer) Start() {
 }
 
 func (p *pausableTimer) GetTotalDuration() time.Duration {
+	if p.IsExpired() {
+		return p.sessionTimeLimit + p.pauseTimer.pausedDuration
+	}
+
+	if p.isTerminated {
+		return p.terminatedAt.Sub(p.sessionStart)
+	}
+
 	return time.Since(p.sessionStart)
 }
 
+func (p *pausableTimer) GetEndTime() time.Time { // TODO: should return an error
+	if !p.IsExpired() {
+		return time.Now().Add(999 * time.Hour)
+	}
+
+	if p.isTerminated {
+		return p.terminatedAt
+	}
+
+	return p.sessionStart.Add(p.GetTotalDuration())
+}
+
 func (p *pausableTimer) GetUnpausedDuration() time.Duration {
-	pausedDuration := p.pauseTimer.pausedDuration
-	return time.Since(p.sessionStart) - pausedDuration
+	if p.isTerminated {
+		return p.terminatedAt.Sub(p.sessionStart) - p.pauseTimer.pausedDuration
+	}
+
+	return time.Since(p.sessionStart) - p.pauseTimer.PausedDuration()
 }
 
 func (p *pausableTimer) SetDuration(newDuration time.Duration) {
-	p.sessionDuration = newDuration
+	p.sessionTimeLimit = newDuration
 }
 
 func (p *pausableTimer) IsExpired() bool {
 	unpausedDuration := p.GetUnpausedDuration()
-	return unpausedDuration >= p.sessionDuration
-
+	return unpausedDuration >= p.sessionTimeLimit
 }
 
-func NewPausableTiemr() PausableTimer {
-	return &pausableTimer{pauseTimer: NewPauseTimer()}
+func (p *pausableTimer) IsPaused() bool {
+	return p.pauseTimer.isPaused
+}
+
+func (p *pausableTimer) OverrideStartTime(newStartTime time.Time) {
+	p.sessionStart = newStartTime
+}
+
+func (p *pausableTimer) GetTimeLimit() time.Duration {
+	return p.sessionTimeLimit
+}
+
+func (p *pausableTimer) OverridePausedDuration(newDuration time.Duration) {
+	p.pauseTimer.pausedDuration = newDuration
+}
+
+func (p *pausableTimer) PausedAt() time.Time {
+	return p.pauseTimer.pausedAt
+}
+
+func (p *pausableTimer) OverridePausedAt(newPausedAt time.Time) {
+	p.pauseTimer.pausedAt = newPausedAt
+}
+
+func (p *pausableTimer) PausedDuration() time.Duration {
+	return p.pauseTimer.pausedDuration
+}
+
+func NewPausableTimer() PausableTimer {
+	return &pausableTimer{pauseTimer: NewPauseTimer(), isTerminated: false}
 }

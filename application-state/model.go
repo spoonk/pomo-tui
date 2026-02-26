@@ -26,18 +26,8 @@ const (
 type Model struct {
 	programState appState
 
-	// TODO: pausable timer abstraction
-	sessionStart      time.Time
-	sessionEnd        time.Time
-	sessionPauseTimer utils.PauseTimer
-
-	// TODO: pausable timer abstraction
-	breakStart      time.Time
-	breakEnd        time.Time
-	breakPauseTimer utils.PauseTimer
-
-	timeLimit  time.Duration
-	breakLimit time.Duration
+	sessionTimer utils.PausableTimer
+	breakTimer   utils.PausableTimer
 
 	width  int
 	height int
@@ -73,16 +63,13 @@ func InitialModel(store storage.Store) Model {
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 
 	return Model{
-		programState:      editTimerState,
-		sessionStart:      time.Now(),
-		sessionPauseTimer: utils.NewPauseTimer(),
-		breakPauseTimer:   utils.NewPauseTimer(),
-		timeLimit:         25 * time.Minute,
-		breakLimit:        5 * time.Minute,
-		timeLimitInput:    sessionInput,
-		breakLimitInput:   breakInput,
-		spinner:           s,
-		store:             store,
+		programState:    editTimerState,
+		sessionTimer:    utils.NewPausableTimer(),
+		breakTimer:      utils.NewPausableTimer(),
+		timeLimitInput:  sessionInput,
+		breakLimitInput: breakInput,
+		spinner:         s,
+		store:           store,
 	}
 }
 

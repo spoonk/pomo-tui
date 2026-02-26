@@ -3,7 +3,6 @@ package applicationstate
 import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
-	"time"
 )
 
 func (m Model) timerStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -14,35 +13,33 @@ func (m Model) timerStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case "p":
-			if m.sessionPauseTimer.IsPaused() {
-				// Resume: accumulate the paused time
-				m.sessionPauseTimer.UnPause()
+			if m.sessionTimer.IsPaused() {
+				m.sessionTimer.UnPause()
 				return m, doTick()
 			} else {
-				m.sessionPauseTimer.Pause()
+				m.sessionTimer.Pause()
 				return m, nil // stop ticking
 			}
 
 		case "x":
-			m.sessionEnd = time.Now()
-			m.breakStart = time.Now()
-			m.breakPauseTimer.Pause()
+			m.sessionTimer.EndEarly()
 			m.programState = breakState
+			m.breakTimer.Reset()
+			m.breakTimer.Start()
 			m.persistSession()
 			return m, nil
 		}
 
 	case tickMsg:
 		// Only process ticks if not paused
-		if m.sessionPauseTimer.IsPaused() {
+		if m.sessionTimer.IsPaused() {
 			return m, nil
 		}
 
-		d := time.Since(m.sessionStart) - m.sessionPauseTimer.PausedDuration()
-
-		if d >= m.timeLimit {
-			m.sessionEnd = time.Now()
-			m.programState = sessionCompleteState
+		if m.sessionTimer.IsExpired() {
+			m.programState = breakState
+			m.breakTimer.Reset()
+			m.breakTimer.Start()
 			m.persistSession()
 			return m, nil
 		}
@@ -50,7 +47,7 @@ func (m Model) timerStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, doTick()
 
 	case spinner.TickMsg:
-		if m.sessionPauseTimer.IsPaused() {
+		if m.sessionTimer.IsPaused() {
 			return m, nil
 		}
 

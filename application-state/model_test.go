@@ -16,11 +16,11 @@ func TestInitialModel(t *testing.T) {
 	assert.Equal(t, editTimerState, m.programState, "should start in initialState")
 
 	// Check default time limits
-	assert.Equal(t, 25*time.Minute, m.timeLimit, "default session should be 25 minutes")
-	assert.Equal(t, 5*time.Minute, m.breakLimit, "default break should be 5 minutes")
+	assert.Equal(t, 25*time.Minute, m.sessionTimer.GetTimeLimit(), "default session should be 25 minutes")
+	assert.Equal(t, 5*time.Minute, m.breakTimer.GetTimeLimit(), "default break should be 5 minutes")
 
 	// Check that sessionStart is set (should be recent)
-	assert.WithinDuration(t, time.Now(), m.sessionStart, 1*time.Second,
+	assert.WithinDuration(t, time.Now(), m.sessionTimer.GetStartTime(), 1*time.Second,
 		"sessionStart should be initialized to approximately now")
 
 	// Check input configuration
