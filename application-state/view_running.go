@@ -27,7 +27,7 @@ func (m Model) runningSessionView() string {
 		Foreground(lipgloss.Color("#A7C080")).
 		Align(lipgloss.Center)
 
-	d := m.sessionTimer.GetUnpausedDuration()
+	d := m.sessionTimer.Elapsed()
 	d = d.Round(time.Second)
 
 	pauseText := ""
@@ -37,14 +37,14 @@ func (m Model) runningSessionView() string {
 	var timerText = ""
 	timerText += d.String()
 	timerText += " / "
-	timerText += formatDuration(m.sessionTimer.GetTimeLimit().Round(time.Second))
+	timerText += formatDuration(m.sessionTimer.TimeLimit().Round(time.Second))
 
 	keybinds := "p: pause · x: stop early · q: quit"
 	if m.sessionTimer.IsPaused() {
 		keybinds = "p: resume · x: stop early · q: quit"
 	}
 
-	breakText := fmt.Sprintf(" - (break: %s)", formatDuration(m.breakTimer.GetTimeLimit()))
+	breakText := fmt.Sprintf(" - (break: %s)", formatDuration(m.breakTimer.TimeLimit()))
 
 	pause := pauseTextStyle.Render(pauseText)
 	timer := timerStyle.Render(timerText)

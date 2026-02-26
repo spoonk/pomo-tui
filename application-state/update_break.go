@@ -13,7 +13,7 @@ func (m Model) breakStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "p":
 			if m.breakTimer.IsPaused() {
-				m.breakTimer.UnPause()
+				m.breakTimer.Resume()
 				return m, doTick()
 			} else {
 				m.breakTimer.Pause()
@@ -21,7 +21,7 @@ func (m Model) breakStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "x":
-			m.breakTimer.EndEarly()
+			m.breakTimer.Stop()
 			m.programState = sessionEndedEarlyState
 			return m, nil
 		}

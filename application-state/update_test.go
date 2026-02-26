@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
+	"pomo-tui/utils"
 )
 
 // TestParseMins tests the minute parsing helper function
@@ -184,11 +185,11 @@ func TestInputStateUpdate_StartSession(t *testing.T) {
 	assert.Equal(t, sessionRunningState, m.programState, "should transition to sessionRunningState")
 
 	// Check time limits were parsed
-	assert.Equal(t, 30*time.Minute, m.sessionTimer.GetTimeLimit(), "should parse time limit from input")
-	assert.Equal(t, 10*time.Minute, m.breakTimer.GetTimeLimit(), "should parse break limit from input")
+	assert.Equal(t, 30*time.Minute, m.sessionTimer.TimeLimit(), "should parse time limit from input")
+	assert.Equal(t, 10*time.Minute, m.breakTimer.TimeLimit(), "should parse break limit from input")
 
 	// Check session start time
-	assert.WithinDuration(t, startTime, m.sessionTimer.GetStartTime(), 1*time.Second,
+	assert.WithinDuration(t, startTime, m.sessionTimer.StartedAt(), 1*time.Second,
 		"session start should be set to approximately now")
 
 	// Check that commands were batched
@@ -216,24 +217,27 @@ func TestInputStateUpdate_EnterOnTimeInput(t *testing.T) {
 func TestTimerStateUpdate_Completion(t *testing.T) {
 	m := InitialModel(nil)
 	m.programState = sessionRunningState
-	m.sessionTimer.OverrideStartTime(time.Now().Add(-26 * time.Minute)) // Started 26 minutes ago
-	m.sessionTimer.SetDuration(25 * time.Minute)
+	// Started 26 minutes ago with a 25-minute limit → already expired by 1 minute
+	m.sessionTimer = utils.NewPausableTimerFromConfig(utils.TimerConfig{
+		Start: time.Now().Add(-26 * time.Minute),
+		Limit: 25 * time.Minute,
+	})
 
-	// Send a tick message
 	msg := tickMsg("tick")
-	endTime := time.Now()
 
 	updatedModel, cmd := m.timerStateUpdate(msg)
 	m = updatedModel.(Model)
 
-	// Should transition to ended state
-	assert.Equal(t, sessionCompleteState, m.programState, "should transition to sessionEndedState")
+	// Session expiry triggers a break, not the complete state directly
+	assert.Equal(t, breakState, m.programState, "should transition to breakState on expiry")
 
-	// Should set end time
-	assert.WithinDuration(t, endTime, m.sessionTimer.GetEndTime(), 1*time.Second,
-		"session end should be set to approximately now")
+	// EndedAt should be ~1 minute ago (start + 25min limit = now - 1min)
+	endedAt, ok := m.sessionTimer.EndedAt()
+	assert.True(t, ok, "timer should have an end time after expiry")
+	assert.WithinDuration(t, time.Now().Add(-1*time.Minute), endedAt, 5*time.Second,
+		"session end should be ~1 minute ago")
 
-	// Should not return a command (timer stops)
+	// Should not return a command (timer stops ticking)
 	assert.Nil(t, cmd, "should not return a command after completion")
 }
 
@@ -241,8 +245,10 @@ func TestTimerStateUpdate_Completion(t *testing.T) {
 func TestTimerStateUpdate_StillRunning(t *testing.T) {
 	m := InitialModel(nil)
 	m.programState = sessionRunningState
-	m.sessionTimer.OverrideStartTime(time.Now().Add(-5 * time.Minute)) // Started 5 minutes ago
-	m.sessionTimer.SetDuration(25 * time.Minute)
+	m.sessionTimer = utils.NewPausableTimerFromConfig(utils.TimerConfig{
+		Start: time.Now().Add(-5 * time.Minute),
+		Limit: 25 * time.Minute,
+	})
 
 	// Send a tick message
 	msg := tickMsg("tick")
@@ -314,11 +320,12 @@ func TestEndStateUpdate_Quit(t *testing.T) {
 func TestTimerStateUpdate_Pause(t *testing.T) {
 	m := InitialModel(nil)
 	m.programState = sessionRunningState
-	m.sessionTimer.OverrideStartTime(time.Now().Add(-5 * time.Minute))
-	m.sessionTimer.SetDuration(25 * time.Minute)
+	m.sessionTimer = utils.NewPausableTimerFromConfig(utils.TimerConfig{
+		Start: time.Now().Add(-5 * time.Minute),
+		Limit: 25 * time.Minute,
+	})
 
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("p")}
-	pauseTime := time.Now()
 
 	updatedModel, cmd := m.timerStateUpdate(msg)
 	m = updatedModel.(Model)
@@ -326,9 +333,9 @@ func TestTimerStateUpdate_Pause(t *testing.T) {
 	// Should be paused
 	assert.True(t, m.sessionTimer.IsPaused(), "should be paused after pressing 'p'")
 
-	// Should set pausedAt time
-	assert.WithinDuration(t, pauseTime, m.sessionTimer.PausedAt(), 100*time.Millisecond,
-		"pausedAt should be set to approximately now")
+	// Elapsed should be frozen at ~5 minutes
+	assert.InDelta(t, float64(5*time.Minute), float64(m.sessionTimer.Elapsed()), float64(200*time.Millisecond),
+		"elapsed should be frozen at ~5 minutes while paused")
 
 	// Should not return a tick command
 	assert.Nil(t, cmd, "should not return a tick command when paused")
@@ -338,11 +345,15 @@ func TestTimerStateUpdate_Pause(t *testing.T) {
 func TestTimerStateUpdate_Resume(t *testing.T) {
 	m := InitialModel(nil)
 	m.programState = sessionRunningState
-	m.sessionTimer.OverrideStartTime(time.Now().Add(-5 * time.Minute))
-	m.sessionTimer.SetDuration(25 * time.Minute)
-	m.sessionTimer.Pause()
-	m.sessionTimer.OverridePausedAt(time.Now().Add(-2 * time.Minute))
-	m.sessionTimer.OverridePausedDuration(1 * time.Minute)
+	// Started 5 min ago, paused at the 3-min mark (pausedAt = now-2min),
+	// with 1 min of prior accumulated pause. Active elapsed should be 5-1-2 = 2 min.
+	m.sessionTimer = utils.NewPausableTimerFromConfig(utils.TimerConfig{
+		Start:       time.Now().Add(-5 * time.Minute),
+		Limit:       25 * time.Minute,
+		IsPaused:    true,
+		PausedAt:    time.Now().Add(-2 * time.Minute),
+		PausedTotal: 1 * time.Minute,
+	})
 
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("p")}
 
@@ -352,9 +363,10 @@ func TestTimerStateUpdate_Resume(t *testing.T) {
 	// Should no longer be paused
 	assert.False(t, m.sessionTimer.IsPaused(), "should not be paused after pressing 'p' while paused")
 
-	// Should have accumulated the paused duration (1 min + 2 min)
-	assert.InDelta(t, 3*time.Minute, m.sessionTimer.PausedDuration(), float64(1*time.Second),
-		"pausedDuration should accumulate time spent paused")
+	// After resuming: total paused = 1min prior + 2min just ended = 3min
+	// Active elapsed = 5min elapsed - 3min paused = 2min
+	assert.InDelta(t, float64(2*time.Minute), float64(m.sessionTimer.Elapsed()), float64(200*time.Millisecond),
+		"elapsed should reflect total active time (~2 minutes)")
 
 	// Should return a tick command to resume
 	assert.NotNil(t, cmd, "should return a tick command when resuming")
@@ -364,9 +376,12 @@ func TestTimerStateUpdate_Resume(t *testing.T) {
 func TestTimerStateUpdate_PausedTick(t *testing.T) {
 	m := InitialModel(nil)
 	m.programState = sessionRunningState
-	m.sessionTimer.OverrideStartTime(time.Now().Add(-5 * time.Minute))
-	m.sessionTimer.SetDuration(25 * time.Minute)
-	m.sessionTimer.Pause()
+	m.sessionTimer = utils.NewPausableTimerFromConfig(utils.TimerConfig{
+		Start:    time.Now().Add(-5 * time.Minute),
+		Limit:    25 * time.Minute,
+		IsPaused: true,
+		PausedAt: time.Now(),
+	})
 
 	msg := tickMsg("tick")
 
@@ -387,29 +402,33 @@ func TestTimerStateUpdate_PausedTick(t *testing.T) {
 func TestTimerStateUpdate_CompletionWithPause(t *testing.T) {
 	m := InitialModel(nil)
 	m.programState = sessionRunningState
-	m.sessionTimer.OverrideStartTime(time.Now().Add(-30 * time.Minute))
-	m.sessionTimer.SetDuration(25 * time.Minute)
+	// Started 30 min ago, 6 min paused → active elapsed = 24 min (should NOT complete)
+	m.sessionTimer = utils.NewPausableTimerFromConfig(utils.TimerConfig{
+		Start:       time.Now().Add(-30 * time.Minute),
+		Limit:       25 * time.Minute,
+		PausedTotal: 6 * time.Minute,
+	})
 
-	m.sessionTimer.OverridePausedDuration(6 * time.Minute) // But 6 minutes were paused
-
-	// Effective time: 30 - 6 = 24 minutes (should NOT complete)
 	msg := tickMsg("tick")
 
 	updatedModel, cmd := m.timerStateUpdate(msg)
 	m = updatedModel.(Model)
 
-	// Should still be running (24 < 25)
+	// Should still be running (active elapsed = 24 min < 25 min limit)
 	assert.Equal(t, sessionRunningState, m.programState, "should still be running")
 	assert.NotNil(t, cmd, "should return a tick command to continue")
 
-	// Now test with more time elapsed
-	m.sessionTimer.OverrideStartTime(time.Now().Add(-32 * time.Minute)) // Started 32 minutes ago
-	// Effective time: 32 - 6 = 26 minutes (should complete)
+	// Now with 32 min elapsed, 6 min paused → active = 26 min (should complete → break)
+	m.sessionTimer = utils.NewPausableTimerFromConfig(utils.TimerConfig{
+		Start:       time.Now().Add(-32 * time.Minute),
+		Limit:       25 * time.Minute,
+		PausedTotal: 6 * time.Minute,
+	})
 
 	updatedModel, cmd = m.timerStateUpdate(msg)
 	m = updatedModel.(Model)
 
-	// Should transition to ended state
-	assert.Equal(t, sessionCompleteState, m.programState, "should transition to sessionEndedState")
+	// Session expiry triggers a break
+	assert.Equal(t, breakState, m.programState, "should transition to breakState on expiry")
 	assert.Nil(t, cmd, "should not return a command after completion")
 }

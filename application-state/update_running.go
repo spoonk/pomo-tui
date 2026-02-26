@@ -14,7 +14,7 @@ func (m Model) timerStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "p":
 			if m.sessionTimer.IsPaused() {
-				m.sessionTimer.UnPause()
+				m.sessionTimer.Resume()
 				return m, doTick()
 			} else {
 				m.sessionTimer.Pause()
@@ -22,7 +22,7 @@ func (m Model) timerStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "x":
-			m.sessionTimer.EndEarly()
+			m.sessionTimer.Stop()
 			m.programState = breakState
 			m.breakTimer.Reset()
 			m.breakTimer.Start()

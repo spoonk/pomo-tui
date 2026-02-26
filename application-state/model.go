@@ -62,10 +62,15 @@ func InitialModel(store storage.Store) Model {
 	s.Spinner = spinner.Points
 	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
 
+	sessionTimer := utils.NewPausableTimer()
+	sessionTimer.SetDuration(25 * time.Minute)
+	breakTimer := utils.NewPausableTimer()
+	breakTimer.SetDuration(5 * time.Minute)
+
 	return Model{
-		programState:    editTimerState,
-		sessionTimer:    utils.NewPausableTimer(),
-		breakTimer:      utils.NewPausableTimer(),
+		programState: editTimerState,
+		sessionTimer: sessionTimer,
+		breakTimer:   breakTimer,
 		timeLimitInput:  sessionInput,
 		breakLimitInput: breakInput,
 		spinner:         s,

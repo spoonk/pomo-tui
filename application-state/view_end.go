@@ -42,10 +42,12 @@ func elapsedTimeUI(m Model) string {
 		Faint(true).
 		PaddingLeft(2)
 
-	startTime := m.sessionTimer.GetStartTime().Format("3:04 PM")
-	endTime := m.sessionTimer.GetEndTime().Format("3:04 PM")
+	startTime := m.sessionTimer.StartedAt().Format("3:04 PM")
 
-	duration := m.breakTimer.GetTotalDuration()
+	endedAt, _ := m.sessionTimer.EndedAt()
+	endTime := endedAt.Format("3:04 PM")
+
+	duration := m.breakTimer.TotalDuration()
 	durationStr := formatDuration(duration)
 
 	return infoStyle.Render(fmt.Sprintf("%s  >  %s (%s)", startTime, endTime, durationStr))

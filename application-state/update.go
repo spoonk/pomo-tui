@@ -24,12 +24,12 @@ func (m Model) persistSession() {
 	if m.store == nil {
 		return
 	}
-	activeDuration := m.sessionTimer.GetUnpausedDuration()
+	endedAt, _ := m.sessionTimer.EndedAt()
 	session := &storage.Session{
-		StartedAt:       m.sessionTimer.GetStartTime().UTC(),
-		EndedAt:         m.sessionTimer.GetEndTime().UTC(),
-		DurationSeconds: int64(activeDuration.Seconds()),
-		PlannedSeconds:  int64(m.sessionTimer.GetTimeLimit().Seconds()),
+		StartedAt:       m.sessionTimer.StartedAt().UTC(),
+		EndedAt:         endedAt.UTC(),
+		DurationSeconds: int64(m.sessionTimer.Elapsed().Seconds()),
+		PlannedSeconds:  int64(m.sessionTimer.TimeLimit().Seconds()),
 	}
 	// Intentionally ignoring the error for now; the TUI stays usable even if
 	// persistence fails. TODO: surface errors in endView if desired.
