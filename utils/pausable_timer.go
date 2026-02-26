@@ -117,12 +117,19 @@ func (p *pausableTimer) IsPaused() bool {
 }
 
 func (p *pausableTimer) IsExpired() bool {
+	if p.start.IsZero() {
+		return false
+	}
 	return p.Elapsed() >= p.limit
 }
 
 // Elapsed returns how much active (non-paused) time has passed.
+// Returns 0 if the timer has not been started yet.
 // While paused, this value is frozen at the moment the pause began.
 func (p *pausableTimer) Elapsed() time.Duration {
+	if p.start.IsZero() {
+		return 0
+	}
 	if p.stopped {
 		return p.stoppedAt.Sub(p.start) - p.pausedTotal
 	}
@@ -134,7 +141,11 @@ func (p *pausableTimer) Elapsed() time.Duration {
 }
 
 // TotalDuration returns wall-clock time elapsed, including any paused periods.
+// Returns 0 if the timer has not been started yet.
 func (p *pausableTimer) TotalDuration() time.Duration {
+	if p.start.IsZero() {
+		return 0
+	}
 	if p.stopped {
 		return p.stoppedAt.Sub(p.start)
 	}
