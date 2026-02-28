@@ -14,15 +14,24 @@ func (m Model) inputView() string {
 
 	timeLimit := ""
 	breakLimit := ""
+	sessionLengthPrompt := "session length"
+	breakLengthPrompt := "break length"
+
+	maxPromptWidth := lipgloss.Width(sessionLengthPrompt)
+	justifiedSLPrompt := lipgloss.NewStyle().Width(maxPromptWidth).Render(sessionLengthPrompt)
+	justifiedBLPrompt := lipgloss.NewStyle().Width(maxPromptWidth).Render(breakLengthPrompt)
 
 	if m.timeLimitInput.Focused() {
-		timeLimit = inputStyleFocused.Render(fmt.Sprintf("> session length %s min", m.timeLimitInput.View()))
-		breakLimit = inputStyleUnFocused.Render(fmt.Sprintf("  break length %s min", m.breakLimitInput.View()))
+		timeLimit = inputStyleFocused.Render(fmt.Sprintf("> %s   %s min", justifiedSLPrompt, m.timeLimitInput.View()))
+		breakLimit = inputStyleUnFocused.Render(fmt.Sprintf("  %s   %s min", justifiedBLPrompt, m.breakLimitInput.View()))
 	} else {
-		timeLimit = inputStyleUnFocused.Render(fmt.Sprintf("  session length %s min", m.timeLimitInput.View()))
-		breakLimit = inputStyleFocused.Render(fmt.Sprintf("> break length %s min", m.breakLimitInput.View()))
+		timeLimit = inputStyleUnFocused.Render(fmt.Sprintf("  %s   %s min", justifiedSLPrompt, m.timeLimitInput.View()))
+		breakLimit = inputStyleFocused.Render(fmt.Sprintf("> %s   %s min", justifiedBLPrompt, m.breakLimitInput.View()))
 	}
 
+	// maxWidth = max(lipgloss.Width(timeLimit), lipgloss.Width(breakLimit))
 	content := timeLimit + "\n" + breakLimit
+	// leftAlignedContent := lipgloss.NewStyle().Width(maxWidth).Render(content)
+
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
