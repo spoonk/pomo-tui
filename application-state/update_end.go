@@ -22,6 +22,7 @@ func (m Model) endStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "e":
 			m.programState = editTimerState
 			m.sessionTimer.Reset()
+			m.timeLimitInput.Focus()
 			return m, textinput.Blink
 		}
 	}
