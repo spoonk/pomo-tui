@@ -14,7 +14,6 @@ func (m Model) runningSessionView() string {
 	}
 
 	project := ""
-
 	if m.selectedProject != nil {
 		project = ui.ProjectTitle(m.selectedProject.Name)
 	}
@@ -24,8 +23,9 @@ func (m Model) runningSessionView() string {
 	hints := ui.Keybinds(keybinds)
 	breakLabel := ui.DimLabel(fmt.Sprintf(" - (break: %s)", ui.FormatDuration(m.breakTimer.TimeLimit())))
 
-	content := lipgloss.JoinVertical(lipgloss.Center, project, pause+timer+breakLabel, "\n"+hints)
+	content := lipgloss.JoinVertical(lipgloss.Center, project, pause+timer+breakLabel)
+	content = lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
+	centeredHints := lipgloss.Place(m.width, 0, lipgloss.Center, 0, hints)
 
-	// content := pause + timer + breakLabel + "\n" + hints
-	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
+	return ui.CompositeOver(content, centeredHints, 0, m.height-2)
 }

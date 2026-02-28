@@ -15,12 +15,20 @@ func (m Model) breakView() string {
 		keybinds = "p: resume · x: terminate · q: quit"
 	}
 
+	project := ""
+	if m.selectedProject != nil {
+		project = ui.ProjectTitle(m.selectedProject.Name)
+	}
 	pause := ui.PauseIndicator(m.breakTimer.IsPaused())
 	breakIndicator := ui.BreakIndicator(true)
 	timer := ui.TimerDisplay(m.breakTimer.Elapsed(), m.breakTimer.TimeLimit())
 	hints := ui.Keybinds(keybinds)
 	sessionLabel := ui.DimLabel(fmt.Sprintf(" - (session: %s)", ui.FormatDuration(m.sessionTimer.TimeLimit())))
 
-	content := pause + " " + breakIndicator + timer + sessionLabel + "\n" + hints
-	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
+	content := lipgloss.JoinVertical(lipgloss.Center, project, pause+breakIndicator+timer+sessionLabel)
+	content = lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
+	centeredHints := lipgloss.Place(m.width, 0, lipgloss.Center, 0, hints)
+
+	return ui.CompositeOver(content, centeredHints, 0, m.height-2)
+
 }

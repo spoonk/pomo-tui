@@ -2,6 +2,7 @@ package applicationstate
 
 import (
 	"fmt"
+	"pomo-tui/ui"
 
 	lipgloss "charm.land/lipgloss/v2"
 )
@@ -53,17 +54,7 @@ func (m Model) inputView() string {
 	groupW := lipgloss.Width(content)
 	groupH := lipgloss.Height(content)
 
-	return compositeOver(inputGroup, dropdown, (m.width-groupW)/2, (m.height-groupH)/2+3)
-}
-
-// Renders overlay over base at x, y
-func compositeOver(base, overlay string, x, y int) string {
-	baseLayer := lipgloss.NewLayer(base) // positioned at 0, 0 initially
-	overlayLayer := lipgloss.NewLayer(overlay).X(x).Y(y)
-
-	compositor := lipgloss.NewCompositor(baseLayer, overlayLayer)
-
-	return compositor.Render()
+	return ui.CompositeOver(inputGroup, dropdown, (m.width-groupW)/2, (m.height-groupH)/2+3)
 }
 
 func applyWidth(input string, width int) string {
