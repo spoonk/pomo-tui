@@ -3,7 +3,7 @@ package applicationstate
 import (
 	"fmt"
 
-	lipgloss "github.com/charmbracelet/lipgloss"
+	lipgloss "charm.land/lipgloss/v2"
 )
 
 func (m Model) inputView() string {
@@ -41,19 +41,29 @@ func (m Model) inputView() string {
 	project := style(projectFocused).Render(fmt.Sprintf("%s%s   %s", prefix(projectFocused), justifiedProjectPrompt, m.projectSelector.View()))
 
 	maxInputLength := max(lipgloss.Width(timeLimit), lipgloss.Width(breakLimit), lipgloss.Width(project))
+	maxInputLength += 2 - maxInputLength%2 // insane hack to handle input width increasing by 1 when first character is entered
 
-	// Indent dropdown items to align with the value column.
-	// Layout: prefix (2) + prompt (maxPromptWidth) + separator (3)
 	dropdown := m.projectSelector.DropdownView()
 
+	borderedStyle := lipgloss.NewStyle().BorderStyle(lipgloss.HiddenBorder())
 	content := applyWidth(timeLimit, maxInputLength) + "\n" + applyWidth(breakLimit, maxInputLength) + "\n" + applyWidth(project, maxInputLength)
-	if dropdown != "" {
-		content += "\n" + dropdown
-	}
 
-	borderedStyle := lipgloss.NewStyle().BorderStyle(lipgloss.NormalBorder())
+	inputGroup := lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, borderedStyle.Render(content))
 
-	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, borderedStyle.Render(content))
+	groupW := lipgloss.Width(content)
+	groupH := lipgloss.Height(content)
+
+	return compositeOver(inputGroup, dropdown, (m.width-groupW)/2, (m.height-groupH)/2+3)
+}
+
+// Renders overlay over base at x, y
+func compositeOver(base, overlay string, x, y int) string {
+	baseLayer := lipgloss.NewLayer(base) // positioned at 0, 0 initially
+	overlayLayer := lipgloss.NewLayer(overlay).X(x).Y(y)
+
+	compositor := lipgloss.NewCompositor(baseLayer, overlayLayer)
+
+	return compositor.Render()
 }
 
 func applyWidth(input string, width int) string {

@@ -194,13 +194,11 @@ func (ps ProjectSelector) Update(msg tea.Msg) (ProjectSelector, tea.Cmd) {
 // selected name or a faint "none" placeholder.
 func (ps ProjectSelector) View() string {
 	// return lipgloss.NewStyle().Faint(true).Render("none")
-	if ps.focused {
-		return ps.textInput.View()
-	}
-	if ps.selected != nil {
+	if ps.selected != nil && !ps.focused {
 		return ps.selected.Name
 	}
-	return lipgloss.NewStyle().Faint(true).Render("none")
+	return ps.textInput.View()
+	// return lipgloss.NewStyle().Faint(true).Render("none")
 }
 
 // DropdownView renders the dropdown list indented by indent spaces, or an
