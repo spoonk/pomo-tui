@@ -1,6 +1,6 @@
 package storage
 
-func (s *sqliteStore) SaveSession(project *Project) error {
+func (s *sqliteStore) SaveProject(project *Project) error {
 	return s.db.Create(project).Error
 }
 

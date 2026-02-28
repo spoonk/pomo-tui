@@ -11,9 +11,11 @@ import (
 )
 
 type Store interface {
-	SaveSession(session *Session) error
 	Close() error
+	SaveSession(session *Session) error
 	GetSessions() []Session
+	SaveProject(project *Project) error
+	GetProjects() []Project
 }
 
 type sqliteStore struct {
