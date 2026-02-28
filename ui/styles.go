@@ -7,6 +7,7 @@ var (
 	KeybindStyle = lipgloss.NewStyle().Faint(true).Foreground(lipgloss.Color("241")).Align(lipgloss.Center)
 	DimStyle     = lipgloss.NewStyle().Faint(true).Foreground(lipgloss.Color("242")).Align(lipgloss.Center)
 	PauseStyle   = lipgloss.NewStyle().Faint(true).Foreground(lipgloss.Color("#A7C080")).Align(lipgloss.Center)
+	BreakStyle   = lipgloss.NewStyle().Faint(true).Foreground(lipgloss.Color("#D699B6")).Align(lipgloss.Center)
 
 	SuccessColor = lipgloss.Color("#A7C080")
 	WarnColor    = lipgloss.Color("#E69875")

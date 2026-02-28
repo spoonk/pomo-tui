@@ -8,18 +8,19 @@ import (
 )
 
 func (m Model) breakView() string {
-	breakTitle := lipgloss.NewStyle().Bold(true).Align(lipgloss.Center).Foreground(ui.BreakColor).Render("[ break ]")
+	// breakTitle := lipgloss.NewStyle().Bold(true).Align(lipgloss.Center).Foreground(ui.BreakColor).Render("[ break ]")
 
-	keybinds := "p: pause · x: stop early · q: quit"
+	keybinds := "p: pause · x: terminate · q: quit"
 	if m.breakTimer.IsPaused() {
-		keybinds = "p: resume · x: stop early · q: quit"
+		keybinds = "p: resume · x: terminate · q: quit"
 	}
 
-	pause         := ui.PauseIndicator(m.breakTimer.IsPaused())
-	timer         := ui.TimerDisplay(m.breakTimer.Elapsed(), m.breakTimer.TimeLimit())
-	hints         := ui.Keybinds(keybinds)
-	sessionLabel  := ui.DimLabel(fmt.Sprintf(" - (session: %s)", ui.FormatDuration(m.sessionTimer.TimeLimit())))
+	pause := ui.PauseIndicator(m.breakTimer.IsPaused())
+	breakIndicator := ui.BreakIndicator(true)
+	timer := ui.TimerDisplay(m.breakTimer.Elapsed(), m.breakTimer.TimeLimit())
+	hints := ui.Keybinds(keybinds)
+	sessionLabel := ui.DimLabel(fmt.Sprintf(" - (session: %s)", ui.FormatDuration(m.sessionTimer.TimeLimit())))
 
-	content := breakTitle + "\n" + pause + timer + sessionLabel + "\n" + hints
+	content := pause + " " + breakIndicator + timer + sessionLabel + "\n" + hints
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }

@@ -14,7 +14,15 @@ func PauseIndicator(isPaused bool) string {
 	if !isPaused {
 		return ""
 	}
-	return PauseStyle.Render(" ⏸︎   ")
+	return PauseStyle.Render("  ")
+}
+
+func BreakIndicator(isBreak bool) string {
+	if !isBreak {
+		return ""
+	}
+
+	return BreakStyle.Render(" 󰒲  ")
 }
 
 // DimLabel renders a secondary label in the muted dim style.
