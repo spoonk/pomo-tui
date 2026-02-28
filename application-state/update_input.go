@@ -15,6 +15,8 @@ func (m Model) inputStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "enter":
 			if m.breakLimitInput.Focused() {
+				m.breakLimitInput.Blur()
+
 				m.sessionTimer.SetDuration(parseMins(m.timeLimitInput.Value(), 25))
 				m.breakTimer.SetDuration(parseMins(m.breakLimitInput.Value(), 5))
 				m.sessionTimer.Start()

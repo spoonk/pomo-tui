@@ -2,58 +2,25 @@ package applicationstate
 
 import (
 	"fmt"
-	"time"
 
 	lipgloss "github.com/charmbracelet/lipgloss"
+	"pomo-tui/ui"
 )
 
 func (m Model) breakView() string {
-	var breakTextStyle = lipgloss.NewStyle().Bold(true).Align(lipgloss.Center).Foreground(lipgloss.Color("#7FBBB3"))
+	// breakTitle := lipgloss.NewStyle().Bold(true).Align(lipgloss.Center).Foreground(ui.BreakColor).Render("[ break ]")
 
-	var timerStyle = lipgloss.NewStyle().
-		Bold(true).
-		Faint(true).Align(lipgloss.Center)
-
-	var keybindStyle = lipgloss.NewStyle().
-		Faint(true).
-		Foreground(lipgloss.Color("241")).
-		Align(lipgloss.Center)
-
-	var sessionTextStyle = lipgloss.NewStyle().
-		Faint(true).
-		Foreground(lipgloss.Color("242")).
-		Align(lipgloss.Center)
-
-	var pauseTextStyle = lipgloss.NewStyle().
-		Faint(true).
-		Foreground(lipgloss.Color("#A7C080")).
-		Align(lipgloss.Center)
-
-	d := m.breakTimer.Elapsed()
-	d = d.Round(time.Second)
-
-	pauseText := ""
+	keybinds := "p: pause · x: terminate · q: quit"
 	if m.breakTimer.IsPaused() {
-		pauseText += " ⏸︎   "
-	}
-	var timerText = ""
-	timerText += d.String()
-	timerText += " / "
-	timerText += formatDuration(m.breakTimer.TimeLimit().Round(time.Second))
-
-	keybinds := "p: pause · x: stop early · q: quit"
-	if m.breakTimer.IsPaused() {
-		keybinds = "p: resume · x: stop early · q: quit"
+		keybinds = "p: resume · x: terminate · q: quit"
 	}
 
-	sessionText := fmt.Sprintf(" - (session: %s)", formatDuration(m.sessionTimer.TimeLimit()))
+	pause := ui.PauseIndicator(m.breakTimer.IsPaused())
+	breakIndicator := ui.BreakIndicator(true)
+	timer := ui.TimerDisplay(m.breakTimer.Elapsed(), m.breakTimer.TimeLimit())
+	hints := ui.Keybinds(keybinds)
+	sessionLabel := ui.DimLabel(fmt.Sprintf(" - (session: %s)", ui.FormatDuration(m.sessionTimer.TimeLimit())))
 
-	breakText := breakTextStyle.Render("[ break ]")
-	pause := pauseTextStyle.Render(pauseText)
-	timer := timerStyle.Render(timerText)
-	hints := keybindStyle.Render(keybinds)
-	breakUI := sessionTextStyle.Render(sessionText)
-
-	content := breakText + "\n" + pause + timer + breakUI + "\n" + hints
+	content := pause + " " + breakIndicator + timer + sessionLabel + "\n" + hints
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
