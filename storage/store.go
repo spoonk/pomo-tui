@@ -40,7 +40,7 @@ func Open() (Store, error) {
 		return nil, fmt.Errorf("opening database: %w", err)
 	}
 
-	if err := db.AutoMigrate(&Session{}); err != nil {
+	if err := db.AutoMigrate(&Session{}, &Project{}); err != nil {
 		return nil, fmt.Errorf("running migrations: %w", err)
 	}
 
