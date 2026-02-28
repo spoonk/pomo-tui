@@ -15,4 +15,7 @@ type Session struct {
 
 	// PlannedSeconds is the session length the user configured
 	PlannedSeconds int64
+
+	ProjectId int
+	Project   Project
 }

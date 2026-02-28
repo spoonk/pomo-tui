@@ -2,7 +2,6 @@ package applicationstate
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"time"
 )
 
 func (m Model) inputStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -16,9 +15,9 @@ func (m Model) inputStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "enter":
 			if m.breakLimitInput.Focused() {
-				m.timeLimit = parseMins(m.timeLimitInput.Value(), 25)
-				m.breakLimit = parseMins(m.breakLimitInput.Value(), 5)
-				m.sessionStart = time.Now()
+				m.sessionTimer.SetDuration(parseMins(m.timeLimitInput.Value(), 25))
+				m.breakTimer.SetDuration(parseMins(m.breakLimitInput.Value(), 5))
+				m.sessionTimer.Start()
 				m.programState = sessionRunningState
 				return m, tea.Batch(doTick(), m.spinner.Tick)
 			} else if m.timeLimitInput.Focused() {

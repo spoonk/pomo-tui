@@ -2,7 +2,6 @@ package applicationstate
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"time"
 )
 
 func (m Model) breakStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -13,29 +12,26 @@ func (m Model) breakStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case "p":
-			if m.breakPauseTimer.IsPaused() {
-				m.breakPauseTimer.UnPause()
+			if m.breakTimer.IsPaused() {
+				m.breakTimer.Resume()
 				return m, doTick()
 			} else {
-				m.breakPauseTimer.Pause()
+				m.breakTimer.Pause()
 				return m, nil // stop ticking
 			}
 
 		case "x":
-			m.breakEnd = time.Now()
+			m.breakTimer.Stop()
 			m.programState = sessionEndedEarlyState
 			return m, nil
 		}
 
 	case tickMsg:
-		if m.breakPauseTimer.IsPaused() {
+		if m.breakTimer.IsPaused() {
 			return m, nil
 		}
 
-		d := time.Since(m.breakStart) - m.breakPauseTimer.PausedDuration()
-
-		if d >= m.breakLimit {
-			m.breakEnd = time.Now()
+		if m.breakTimer.IsExpired() {
 			m.programState = sessionCompleteState // TODO: new session here
 			// TODO: should I persist breaks or not?
 			return m, nil

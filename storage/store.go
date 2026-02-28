@@ -11,9 +11,11 @@ import (
 )
 
 type Store interface {
-	SaveSession(session *Session) error
 	Close() error
+	SaveSession(session *Session) error
 	GetSessions() []Session
+	SaveProject(project *Project) error
+	GetProjects() []Project
 }
 
 type sqliteStore struct {
@@ -43,20 +45,6 @@ func Open() (Store, error) {
 	}
 
 	return &sqliteStore{db: db}, nil
-}
-
-func (s *sqliteStore) SaveSession(session *Session) error {
-	return s.db.Create(session).Error
-}
-
-func (s *sqliteStore) GetSessions() []Session {
-	var sessions []Session
-	result := s.db.Find(&sessions)
-	if result.Error != nil {
-		panic(result.Error)
-	}
-
-	return sessions
 }
 
 func (s *sqliteStore) Close() error {

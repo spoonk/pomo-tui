@@ -3,7 +3,6 @@ package applicationstate
 import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"time"
 )
 
 func (m Model) endStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -17,12 +16,12 @@ func (m Model) endStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case "r":
 			m.programState = sessionRunningState
-			m.sessionStart = time.Now()
-			m.sessionPauseTimer.Reset()
+			m.sessionTimer.Reset()
+			m.sessionTimer.Start()
 			return m, doTick()
 		case "e":
 			m.programState = editTimerState
-			m.sessionPauseTimer.Reset()
+			m.sessionTimer.Reset()
 			return m, textinput.Blink
 		}
 	}
