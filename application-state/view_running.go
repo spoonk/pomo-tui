@@ -2,55 +2,22 @@ package applicationstate
 
 import (
 	"fmt"
-	"time"
 
 	lipgloss "github.com/charmbracelet/lipgloss"
+	"pomo-tui/ui"
 )
 
 func (m Model) runningSessionView() string {
-	var timerStyle = lipgloss.NewStyle().
-		Bold(true).
-		Faint(true).Align(lipgloss.Center)
-
-	var keybindStyle = lipgloss.NewStyle().
-		Faint(true).
-		Foreground(lipgloss.Color("241")).
-		Align(lipgloss.Center)
-
-	var breakTextStyle = lipgloss.NewStyle().
-		Faint(true).
-		Foreground(lipgloss.Color("242")).
-		Align(lipgloss.Center)
-
-	var pauseTextStyle = lipgloss.NewStyle().
-		Faint(true).
-		Foreground(lipgloss.Color("#A7C080")).
-		Align(lipgloss.Center)
-
-	d := m.sessionTimer.Elapsed()
-	d = d.Round(time.Second)
-
-	pauseText := ""
-	if m.sessionTimer.IsPaused() {
-		pauseText += " ⏸︎   "
-	}
-	var timerText = ""
-	timerText += d.String()
-	timerText += " / "
-	timerText += formatDuration(m.sessionTimer.TimeLimit().Round(time.Second))
-
 	keybinds := "p: pause · x: stop early · q: quit"
 	if m.sessionTimer.IsPaused() {
 		keybinds = "p: resume · x: stop early · q: quit"
 	}
 
-	breakText := fmt.Sprintf(" - (break: %s)", formatDuration(m.breakTimer.TimeLimit()))
+	pause      := ui.PauseIndicator(m.sessionTimer.IsPaused())
+	timer      := ui.TimerDisplay(m.sessionTimer.Elapsed(), m.sessionTimer.TimeLimit())
+	hints      := ui.Keybinds(keybinds)
+	breakLabel := ui.DimLabel(fmt.Sprintf(" - (break: %s)", ui.FormatDuration(m.breakTimer.TimeLimit())))
 
-	pause := pauseTextStyle.Render(pauseText)
-	timer := timerStyle.Render(timerText)
-	hints := keybindStyle.Render(keybinds)
-	breakUI := breakTextStyle.Render(breakText)
-
-	content := pause + timer + breakUI + "\n" + hints
+	content := pause + timer + breakLabel + "\n" + hints
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }

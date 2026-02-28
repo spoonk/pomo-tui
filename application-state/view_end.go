@@ -1,195 +1,57 @@
 package applicationstate
 
 import (
-	"fmt"
-	"strings"
 	"time"
 
 	lipgloss "github.com/charmbracelet/lipgloss"
+	"pomo-tui/storage"
+	"pomo-tui/ui"
 )
 
 func (m Model) completedView() string {
-	checkStyle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#A7C080"))
+	checkStyle := lipgloss.NewStyle().Bold(true).Foreground(ui.SuccessColor)
 
 	checkLine := checkStyle.Render("✓ Session complete")
-	infoLine := elapsedTimeUI(m)
-	keybinds := endStateKeybindsUI()
-	// list := sessionListUI(m)
-	list := sessionGridUI(m)
+	infoLine  := elapsedTimeUI(m)
+	keybinds  := ui.Keybinds("r: restart · e: edit duration · q: quit")
+	grid      := ui.SessionGrid(toSessionEntries(m.store))
 
-	content := checkLine + "\n" + infoLine + "\n" + keybinds + "\n\n" + list
+	content := checkLine + "\n" + infoLine + "\n" + keybinds + "\n\n" + grid
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
 
 func (m Model) stoppedEarlyView() string {
-	checkStyle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("#E69875"))
+	checkStyle := lipgloss.NewStyle().Bold(true).Foreground(ui.WarnColor)
 
 	checkLine := checkStyle.Render("⏺  Session stopped early")
-	infoLine := elapsedTimeUI(m)
-	keybinds := endStateKeybindsUI()
-	list := sessionGridUI(m)
+	infoLine  := elapsedTimeUI(m)
+	keybinds  := ui.Keybinds("r: restart · e: edit duration · q: quit")
+	grid      := ui.SessionGrid(toSessionEntries(m.store))
 
-	content := checkLine + "\n" + infoLine + "\n" + keybinds + "\n\n" + list
+	content := checkLine + "\n" + infoLine + "\n" + keybinds + "\n\n" + grid
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
 
 func elapsedTimeUI(m Model) string {
-	infoStyle := lipgloss.NewStyle().
-		Faint(true).
-		PaddingLeft(2)
-
-	startTime := m.sessionTimer.StartedAt().Format("3:04 PM")
-
 	endedAt, _ := m.sessionTimer.EndedAt()
-	endTime := endedAt.Format("3:04 PM")
-
-	duration := m.breakTimer.TotalDuration()
-	durationStr := formatDuration(duration)
-
-	return infoStyle.Render(fmt.Sprintf("%s  >  %s (%s)", startTime, endTime, durationStr))
+	return ui.ElapsedTime(m.sessionTimer.StartedAt(), endedAt, m.breakTimer.TotalDuration())
 }
 
-func sessionListUI(m Model) string {
-	if m.store == nil {
-		return ""
+// toSessionEntries converts storage sessions into the plain ui.SessionEntry type,
+// keeping storage types out of the ui package.
+func toSessionEntries(store storage.Store) []ui.SessionEntry {
+	if store == nil {
+		return nil
 	}
-	sessions := m.store.GetSessions()
-	if len(sessions) == 0 {
-		return ""
-	}
-
-	dimStyle := lipgloss.NewStyle().
-		Faint(true).
-		Foreground(lipgloss.Color("241"))
-
-	completedStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#A7C080")).Faint(true)
-
-	stoppedStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#E69875")).Faint(true)
-
-	type rowData struct {
-		completed bool
-		timeStr   string
-		durStr    string
-	}
-
-	rows := make([]rowData, len(sessions))
-	maxTimeWidth := 0
-	maxDurWidth := 0
-
+	sessions := store.GetSessions()
+	entries := make([]ui.SessionEntry, len(sessions))
 	for i, s := range sessions {
-		duration := time.Duration(s.DurationSeconds) * time.Second
-		planned := time.Duration(s.PlannedSeconds) * time.Second
-		completed := s.DurationSeconds >= s.PlannedSeconds
-
-		var durStr string
-		if completed {
-			durStr = formatDuration(planned)
-		} else {
-			durStr = formatDuration(duration)
-		}
-
-		timeStr := s.StartedAt.Local().Format("3:04 PM")
-
-		if len(timeStr) > maxTimeWidth {
-			maxTimeWidth = len(timeStr)
-		}
-		if len(durStr) > maxDurWidth {
-			maxDurWidth = len(durStr)
-		}
-
-		rows[i] = rowData{completed: completed, timeStr: timeStr, durStr: durStr}
-	}
-
-	var lines []string
-	for _, r := range rows {
-		var icon string
-		if r.completed {
-			icon = completedStyle.Render("✓")
-		} else {
-			icon = stoppedStyle.Render("⏺")
-		}
-
-		iconCell := lipgloss.NewStyle().Width(3).Render(icon)
-		timeCell := dimStyle.Width(maxTimeWidth + 2).Render(r.timeStr)
-		durCell := dimStyle.Width(maxDurWidth + len("()")).Render(fmt.Sprintf("(%s)", r.durStr))
-
-		line := lipgloss.JoinHorizontal(lipgloss.Top, iconCell, timeCell, durCell)
-		lines = append(lines, line)
-	}
-
-	return strings.Join(lines, "\n")
-}
-
-func sessionGridUI(m Model) string {
-	completedStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#A7C080")).Faint(true)
-
-	stoppedStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#E69875")).Faint(true)
-
-	const columnsPerRow = 10
-
-	if m.store == nil {
-		return ""
-	}
-	sessions := m.store.GetSessions()
-	if len(sessions) == 0 {
-		return ""
-	}
-
-	var rowBuilder strings.Builder
-	var outputBuilder strings.Builder
-
-	pushed := 0
-	var fullRowWidth int
-
-	for _, s := range sessions {
-		completed := s.DurationSeconds >= s.PlannedSeconds
-
-		var icon string
-		if completed {
-			icon = completedStyle.Render("✓ ")
-		} else {
-			icon = stoppedStyle.Render("⏺ ")
-		}
-		rowBuilder.WriteString(icon)
-		pushed++
-
-		if pushed == columnsPerRow {
-			row := rowBuilder.String()
-			if fullRowWidth == 0 {
-				fullRowWidth = lipgloss.Width(row)
-			}
-			outputBuilder.WriteString(row + "\n")
-			rowBuilder.Reset()
-			pushed = 0
+		entries[i] = ui.SessionEntry{
+			Completed: s.DurationSeconds >= s.PlannedSeconds,
+			StartedAt: s.StartedAt,
+			Duration:  time.Duration(s.DurationSeconds) * time.Second,
+			Planned:   time.Duration(s.PlannedSeconds) * time.Second,
 		}
 	}
-
-	if pushed != 0 {
-		outputBuilder.WriteString(rowBuilder.String())
-	}
-
-	if fullRowWidth == 0 {
-		fullRowWidth = lipgloss.Width(outputBuilder.String())
-	}
-
-	return lipgloss.NewStyle().Width(fullRowWidth).Render(outputBuilder.String())
-}
-
-func endStateKeybindsUI() string {
-	var keybindStyle = lipgloss.NewStyle().
-		Faint(true).
-		Foreground(lipgloss.Color("241")).
-		Align(lipgloss.Center)
-
-	keybinds := "r: restart · e: edit duration · q: quit"
-
-	return keybindStyle.Render(keybinds)
+	return entries
 }
