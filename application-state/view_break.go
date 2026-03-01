@@ -25,10 +25,13 @@ func (m Model) breakView() string {
 	hints := ui.Keybinds(keybinds)
 	sessionLabel := ui.DimLabel(fmt.Sprintf(" - (session: %s)", ui.FormatDuration(m.sessionTimer.TimeLimit())))
 
-	content := lipgloss.JoinVertical(lipgloss.Center, project, pause+breakIndicator+timer+sessionLabel)
+	content := lipgloss.JoinVertical(lipgloss.Center, project, timer+sessionLabel)
+	contentW := lipgloss.Width(content)
 	content = lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 	centeredHints := lipgloss.Place(m.width, 0, lipgloss.Center, 0, hints)
 
-	return ui.CompositeOver(content, centeredHints, 0, m.height-2)
+	contentWithHints := ui.CompositeOver(content, centeredHints, 0, m.height-2)
+
+	return ui.CompositeOver(contentWithHints, pause+breakIndicator, (m.width-contentW)/2-6, m.height/2)
 
 }
