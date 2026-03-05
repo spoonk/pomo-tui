@@ -142,7 +142,7 @@ func (ps ProjectSelector) Update(msg tea.Msg) (ProjectSelector, tea.Cmd) {
 
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		switch keyMsg.String() {
-		case "down", "j":
+		case "down":
 			total := len(ps.filtered)
 			if ps.showCreateOption() {
 				total++
@@ -152,7 +152,7 @@ func (ps ProjectSelector) Update(msg tea.Msg) (ProjectSelector, tea.Cmd) {
 			}
 			return ps, nil
 
-		case "up", "k":
+		case "up":
 			if ps.cursor > 0 {
 				ps.cursor--
 				return ps, nil
