@@ -147,7 +147,7 @@ func (ps ProjectSelector) Update(msg tea.Msg) (ProjectSelector, tea.Cmd) {
 			if ps.showCreateOption() {
 				total++
 			}
-			if ps.cursor < total-1 {
+			if ps.cursor < min(total-1, 10) {
 				ps.cursor++
 			}
 			return ps, nil
@@ -212,11 +212,17 @@ func (ps ProjectSelector) DropdownView() string {
 		return ""
 	}
 
-	selectedStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).Faint(true)
+	selectedStyle := lipgloss.NewStyle().Bold(true).Faint(true)
 	dimStyle := lipgloss.NewStyle().Faint(true)
+
+	shouldTruncate := len(ps.filtered) > 10
 
 	var lines []string
 	for i, entry := range ps.filtered {
+		if i > 10 {
+			break
+		}
+
 		var line string
 		if i == ps.cursor {
 			line = selectedStyle.Render(" " + entry.Name)
@@ -235,6 +241,10 @@ func (ps ProjectSelector) DropdownView() string {
 			line = dimStyle.Render("  " + label)
 		}
 		lines = append(lines, line)
+	}
+
+	if shouldTruncate {
+		lines = append(lines, dimStyle.Render("  ..."))
 	}
 
 	return strings.Join(lines, "\n")
