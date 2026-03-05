@@ -44,10 +44,14 @@ func (m Model) inputStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "enter":
 			if m.breakLimitInput.Focused() {
-				return m.startSession()
+				m.breakLimitInput.Blur()
+				m.projectSelector, cmd = m.projectSelector.Focus()
+				return m, cmd
 			} else if m.timeLimitInput.Focused() {
 				m.timeLimitInput.Blur()
 				return m, m.breakLimitInput.Focus()
+			} else {
+				return m.startSession()
 			}
 
 		case "up", "k":
