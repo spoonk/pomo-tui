@@ -9,6 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"pomo-tui/storage"
+	"pomo-tui/ui"
 	"pomo-tui/utils"
 )
 
@@ -35,6 +36,9 @@ type Model struct {
 	timeLimitInput  textinput.Model
 	breakLimitInput textinput.Model
 	spinner         spinner.Model
+
+	projectSelector ui.ProjectSelector
+	selectedProject *ui.ProjectEntry
 
 	// store is injected at construction time. It may be nil if the database
 	// could not be opened
@@ -67,13 +71,24 @@ func InitialModel(store storage.Store) Model {
 	breakTimer := utils.NewPausableTimer()
 	breakTimer.SetDuration(5 * time.Minute)
 
+	var projectEntries []ui.ProjectEntry
+	if store != nil {
+		for _, p := range store.GetProjects() {
+			projectEntries = append(projectEntries, ui.ProjectEntry{
+				ID:   p.ID,
+				Name: p.Name,
+			})
+		}
+	}
+
 	return Model{
-		programState: editTimerState,
-		sessionTimer: sessionTimer,
-		breakTimer:   breakTimer,
+		programState:    editTimerState,
+		sessionTimer:    sessionTimer,
+		breakTimer:      breakTimer,
 		timeLimitInput:  sessionInput,
 		breakLimitInput: breakInput,
 		spinner:         s,
+		projectSelector: ui.NewProjectSelector(projectEntries),
 		store:           store,
 	}
 }

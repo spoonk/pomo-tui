@@ -31,6 +31,9 @@ func (m Model) persistSession() {
 		DurationSeconds: int64(m.sessionTimer.Elapsed().Seconds()),
 		PlannedSeconds:  int64(m.sessionTimer.TimeLimit().Seconds()),
 	}
+	if m.selectedProject != nil {
+		session.ProjectId = int(m.selectedProject.ID)
+	}
 	// Intentionally ignoring the error for now; the TUI stays usable even if
 	// persistence fails. TODO: surface errors in endView if desired.
 	_ = m.store.SaveSession(session)
