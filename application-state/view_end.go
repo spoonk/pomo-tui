@@ -38,7 +38,7 @@ func elapsedTimeUI(m Model) string {
 }
 
 // toSessionListEntries converts storage sessions into ui.SessionListEntry values,
-// filtering to today's sessions only and reversing so newest is first.
+// filtering to today's sessions only.
 func toSessionListEntries(store storage.Store) []ui.SessionListEntry {
 	if store == nil {
 		return nil
@@ -61,11 +61,6 @@ func toSessionListEntries(store storage.Store) []ui.SessionListEntry {
 			EndedAt:     s.EndedAt.In(time.Local),
 			Duration:    time.Duration(s.DurationSeconds) * time.Second,
 		})
-	}
-
-	// Reverse so newest is first
-	for i, j := 0, len(entries)-1; i < j; i, j = i+1, j-1 {
-		entries[i], entries[j] = entries[j], entries[i]
 	}
 
 	return entries
