@@ -14,9 +14,9 @@ func (m Model) completedView() string {
 	checkLine := checkStyle.Render("✓ Session complete")
 	infoLine := elapsedTimeUI(m)
 	keybinds := ui.Keybinds("r: restart · e: edit duration · q: quit")
-	grid := ui.SessionGrid(toSessionEntries(m.store))
+	list := ui.SessionList(toSessionListEntries(m.store))
 
-	content := checkLine + "\n" + infoLine + "\n" + keybinds + "\n\n" + grid
+	content := checkLine + "\n" + infoLine + "\n" + keybinds + "\n\n" + list
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
 
@@ -26,9 +26,9 @@ func (m Model) stoppedEarlyView() string {
 	checkLine := checkStyle.Render("⏺  Session stopped early")
 	infoLine := elapsedTimeUI(m)
 	keybinds := ui.Keybinds("r: restart · e: edit duration · q: quit")
-	grid := ui.SessionGrid(toSessionEntries(m.store))
+	list := ui.SessionList(toSessionListEntries(m.store))
 
-	content := checkLine + "\n" + infoLine + "\n" + keybinds + "\n\n" + grid
+	content := checkLine + "\n" + infoLine + "\n" + keybinds + "\n\n" + list
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
 }
 
@@ -37,21 +37,36 @@ func elapsedTimeUI(m Model) string {
 	return ui.ElapsedTime(m.sessionTimer.StartedAt(), endedAt, m.sessionTimer.TotalDuration())
 }
 
-// toSessionEntries converts storage sessions into the plain ui.SessionEntry type,
-// keeping storage types out of the ui package.
-func toSessionEntries(store storage.Store) []ui.SessionEntry {
+// toSessionListEntries converts storage sessions into ui.SessionListEntry values,
+// filtering to today's sessions only and reversing so newest is first.
+func toSessionListEntries(store storage.Store) []ui.SessionListEntry {
 	if store == nil {
 		return nil
 	}
 	sessions := store.GetSessions()
-	entries := make([]ui.SessionEntry, len(sessions))
-	for i, s := range sessions {
-		entries[i] = ui.SessionEntry{
-			Completed: s.DurationSeconds >= s.PlannedSeconds,
-			StartedAt: s.StartedAt,
-			Duration:  time.Duration(s.DurationSeconds) * time.Second,
-			Planned:   time.Duration(s.PlannedSeconds) * time.Second,
+
+	now := time.Now()
+	todayYear, todayMonth, todayDay := now.Date()
+
+	var entries []ui.SessionListEntry
+	for _, s := range sessions {
+		y, mo, d := s.StartedAt.In(time.Local).Date()
+		if y != todayYear || mo != todayMonth || d != todayDay {
+			continue
 		}
+		entries = append(entries, ui.SessionListEntry{
+			Completed:   s.DurationSeconds >= s.PlannedSeconds,
+			ProjectName: s.Project.Name,
+			StartedAt:   s.StartedAt.In(time.Local),
+			EndedAt:     s.EndedAt.In(time.Local),
+			Duration:    time.Duration(s.DurationSeconds) * time.Second,
+		})
 	}
+
+	// Reverse so newest is first
+	for i, j := 0, len(entries)-1; i < j; i, j = i+1, j-1 {
+		entries[i], entries[j] = entries[j], entries[i]
+	}
+
 	return entries
 }
