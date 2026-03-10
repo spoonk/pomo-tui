@@ -21,6 +21,7 @@ func (m Model) breakView() string {
 	}
 	pause := ui.PauseIndicator(m.breakTimer.IsPaused())
 	breakIndicator := ui.BreakIndicator(true)
+
 	timer := ui.TimerDisplay(m.breakTimer.Elapsed(), m.breakTimer.TimeLimit())
 	hints := ui.Keybinds(keybinds)
 	sessionLabel := ui.DimLabel(fmt.Sprintf(" - (session: %s)", ui.FormatDuration(m.sessionTimer.TimeLimit())))
@@ -32,6 +33,5 @@ func (m Model) breakView() string {
 
 	contentWithHints := ui.CompositeOver(content, centeredHints, 0, m.height-2)
 
-	return ui.CompositeOver(contentWithHints, pause+breakIndicator, (m.width-contentW)/2-6, m.height/2)
-
+	return ui.CompositeOver(contentWithHints, pause+breakIndicator, (m.width-contentW)/2-lipgloss.Width(pause+breakIndicator), m.height/2)
 }

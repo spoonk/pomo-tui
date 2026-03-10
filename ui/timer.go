@@ -12,14 +12,14 @@ func TimerDisplay(elapsed, limit time.Duration) string {
 // string when it is running.
 func PauseIndicator(isPaused bool) string {
 	if !isPaused {
-		return ""
+		return "  "
 	}
 	return PauseStyle.Render("  ")
 }
 
 func BreakIndicator(isBreak bool) string {
 	if !isBreak {
-		return ""
+		return "  "
 	}
 
 	return BreakStyle.Render(" 󰒲  ")

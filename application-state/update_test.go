@@ -168,11 +168,12 @@ func TestInputStateUpdate_Navigation(t *testing.T) {
 func TestInputStateUpdate_StartSession(t *testing.T) {
 	m := InitialModel(nil)
 	m.timeLimitInput.Blur()
-	m.breakLimitInput.Focus()
+	m.projectSelector.Focus()
 
 	// Set some values
 	m.timeLimitInput.SetValue("30")
 	m.breakLimitInput.SetValue("10")
+	m.selectedProject = nil
 
 	// Press enter on break input (should start session)
 	msg := tea.KeyMsg{Type: tea.KeyEnter}

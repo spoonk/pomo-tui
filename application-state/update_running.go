@@ -36,10 +36,12 @@ func (m Model) timerStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
+		// Transition to break
 		if m.sessionTimer.IsExpired() {
 			m.programState = breakState
 			m.breakTimer.Reset()
 			m.breakTimer.Start()
+			m.breakTimer.Pause()
 			m.persistSession()
 			return m, nil
 		}
