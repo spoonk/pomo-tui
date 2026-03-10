@@ -27,13 +27,13 @@ func (m Model) breakStateUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tickMsg:
+
 		if m.breakTimer.IsPaused() {
 			return m, nil
 		}
 
 		if m.breakTimer.IsExpired() {
-			m.programState = sessionCompleteState // TODO: new session here
-			// TODO: should I persist breaks or not?
+			m.programState = sessionCompleteState
 			return m, nil
 		}
 
