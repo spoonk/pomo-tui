@@ -12,7 +12,7 @@ func (m Model) View() string {
 		return m.completedView()
 
 	case sessionEndedEarlyState:
-		return m.stoppedEarlyView()
+		return m.completedView()
 
 	case breakState:
 		return m.breakView()

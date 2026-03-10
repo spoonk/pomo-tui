@@ -9,27 +9,25 @@ import (
 )
 
 func (m Model) completedView() string {
-	checkStyle := lipgloss.NewStyle().Bold(true).Foreground(ui.SuccessColor)
+	endMessageStyle := lipgloss.NewStyle().Bold(true).Foreground(ui.WarnColor)
+	var endMessage string
+	if m.programState == sessionCompleteState {
+		endMessage = endMessageStyle.Render("✓ Session complete")
+	} else {
+		endMessage = endMessageStyle.Render("⏺  Session stopped early")
+	}
 
-	checkLine := checkStyle.Render("✓ Session complete")
 	infoLine := elapsedTimeUI(m)
-	keybinds := ui.Keybinds("r: restart · e: edit duration · q: quit")
+	hints := ui.Keybinds("r: restart · e: edit duration · q: quit")
 	list := ui.SessionList(toSessionListEntries(m.store))
 
-	content := checkLine + "\n" + infoLine + "\n" + keybinds + "\n\n" + list
-	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
-}
+	content := lipgloss.JoinVertical(lipgloss.Center, endMessage, infoLine, list)
+	content = lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
+	centeredHints := lipgloss.Place(m.width, 0, lipgloss.Center, 0, hints)
 
-func (m Model) stoppedEarlyView() string {
-	checkStyle := lipgloss.NewStyle().Bold(true).Foreground(ui.WarnColor)
+	contentWithHints := ui.CompositeOver(content, centeredHints, 0, m.height-2)
 
-	checkLine := checkStyle.Render("⏺  Session stopped early")
-	infoLine := elapsedTimeUI(m)
-	keybinds := ui.Keybinds("r: restart · e: edit duration · q: quit")
-	list := ui.SessionList(toSessionListEntries(m.store))
-
-	content := checkLine + "\n" + infoLine + "\n" + keybinds + "\n\n" + list
-	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
+	return contentWithHints
 }
 
 func elapsedTimeUI(m Model) string {
