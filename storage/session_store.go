@@ -6,7 +6,7 @@ func (s *sqliteStore) SaveSession(session *Session) error {
 
 func (s *sqliteStore) GetSessions() []Session {
 	var sessions []Session
-	result := s.db.Find(&sessions)
+	result := s.db.Preload("Project").Find(&sessions)
 	if result.Error != nil {
 		panic(result.Error)
 	}

@@ -9,27 +9,30 @@ import (
 )
 
 func (m Model) completedView() string {
-	checkStyle := lipgloss.NewStyle().Bold(true).Foreground(ui.SuccessColor)
+	var endMessage string
+	if m.programState == sessionCompleteState {
+		endMessageStyle := lipgloss.NewStyle().Bold(true).Foreground(ui.SuccessColor)
+		endMessage = endMessageStyle.Render("✓ Session complete")
+	} else {
+		endMessageStyle := lipgloss.NewStyle().Bold(true).Foreground(ui.WarnColor)
+		endMessage = endMessageStyle.Render("⏺  Session stopped early")
+	}
 
-	checkLine := checkStyle.Render("✓ Session complete")
 	infoLine := elapsedTimeUI(m)
-	keybinds := ui.Keybinds("r: restart · e: edit duration · q: quit")
-	grid := ui.SessionGrid(toSessionEntries(m.store))
+	hints := ui.Keybinds("r: restart · e: edit duration · q: quit")
 
-	content := checkLine + "\n" + infoLine + "\n" + keybinds + "\n\n" + grid
-	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
-}
+	centeredContent := lipgloss.JoinVertical(lipgloss.Center, endMessage, infoLine)
+	contentH := lipgloss.Height(centeredContent)
 
-func (m Model) stoppedEarlyView() string {
-	checkStyle := lipgloss.NewStyle().Bold(true).Foreground(ui.WarnColor)
+	centeredContent = lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, centeredContent)
+	centeredHints := lipgloss.Place(m.width, 0, lipgloss.Center, 0, hints)
+	list := ui.SessionList(toSessionListEntries(m.store))
+	centeredList := lipgloss.Place(m.width, 0, lipgloss.Center, 0, list)
 
-	checkLine := checkStyle.Render("⏺  Session stopped early")
-	infoLine := elapsedTimeUI(m)
-	keybinds := ui.Keybinds("r: restart · e: edit duration · q: quit")
-	grid := ui.SessionGrid(toSessionEntries(m.store))
+	withList := ui.CompositeOver(centeredContent, centeredList, 0, (m.height+contentH)/2+2)
+	withHints := ui.CompositeOver(withList, centeredHints, 0, m.height-2)
 
-	content := checkLine + "\n" + infoLine + "\n" + keybinds + "\n\n" + grid
-	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
+	return withHints
 }
 
 func elapsedTimeUI(m Model) string {
@@ -37,21 +40,31 @@ func elapsedTimeUI(m Model) string {
 	return ui.ElapsedTime(m.sessionTimer.StartedAt(), endedAt, m.sessionTimer.TotalDuration())
 }
 
-// toSessionEntries converts storage sessions into the plain ui.SessionEntry type,
-// keeping storage types out of the ui package.
-func toSessionEntries(store storage.Store) []ui.SessionEntry {
+// toSessionListEntries converts storage sessions into ui.SessionListEntry values,
+// filtering to today's sessions only.
+func toSessionListEntries(store storage.Store) []ui.SessionListEntry {
 	if store == nil {
 		return nil
 	}
 	sessions := store.GetSessions()
-	entries := make([]ui.SessionEntry, len(sessions))
-	for i, s := range sessions {
-		entries[i] = ui.SessionEntry{
-			Completed: s.DurationSeconds >= s.PlannedSeconds,
-			StartedAt: s.StartedAt,
-			Duration:  time.Duration(s.DurationSeconds) * time.Second,
-			Planned:   time.Duration(s.PlannedSeconds) * time.Second,
+
+	now := time.Now()
+	todayYear, todayMonth, todayDay := now.Date()
+
+	var entries []ui.SessionListEntry
+	for _, s := range sessions {
+		y, mo, d := s.StartedAt.In(time.Local).Date()
+		if y != todayYear || mo != todayMonth || d != todayDay {
+			continue
 		}
+		entries = append(entries, ui.SessionListEntry{
+			Completed:   s.DurationSeconds >= s.PlannedSeconds,
+			ProjectName: s.Project.Name,
+			StartedAt:   s.StartedAt.In(time.Local),
+			EndedAt:     s.EndedAt.In(time.Local),
+			Duration:    time.Duration(s.DurationSeconds) * time.Second,
+		})
 	}
+
 	return entries
 }
