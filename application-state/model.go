@@ -111,5 +111,10 @@ func doTick() tea.Cmd {
 }
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(tea.ClearScreen, textinput.Blink)
+	switch m.programState {
+	case sessionRunningState, breakState:
+		return tea.Batch(tea.ClearScreen, doTick())
+	default:
+		return tea.Batch(tea.ClearScreen, textinput.Blink)
+	}
 }
