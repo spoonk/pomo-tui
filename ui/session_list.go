@@ -23,21 +23,12 @@ func SessionList(entries []SessionListEntry) string {
 		return ""
 	}
 
-	completedStyle := lipgloss.NewStyle().Foreground(SuccessColor).Faint(true)
-	stoppedStyle := lipgloss.NewStyle().Foreground(WarnColor).Faint(true)
 	dimStyle := lipgloss.NewStyle().Faint(true)
 
 	const projectWidth = 16
 
 	var sb strings.Builder
 	for i, e := range entries {
-		var icon string
-		if e.Completed {
-			icon = completedStyle.Render("✓ ")
-		} else {
-			icon = stoppedStyle.Render("⏺ ")
-		}
-
 		projectName := e.ProjectName
 		if projectName == "" {
 			projectName = "No project"
@@ -48,10 +39,10 @@ func SessionList(entries []SessionListEntry) string {
 		}
 
 		project := dimStyle.Render(fmt.Sprintf("%-*s", projectWidth, projectName))
-		timeRange := dimStyle.Render(fmt.Sprintf("%s > %s", e.StartedAt.Format("3:04 PM"), e.EndedAt.Format("3:04 PM")))
-		duration := dimStyle.Render(FormatDuration(e.Duration))
+		timeRange := VeryDimStyle.Render(fmt.Sprintf("%s > %s", e.StartedAt.Format("3:04 PM"), e.EndedAt.Format("3:04 PM")))
+		duration := VeryDimStyle.Render(FormatDuration(e.Duration))
 
-		sb.WriteString(icon + project + "  " + timeRange + "  " + duration)
+		sb.WriteString(project + "  " + timeRange + "  " + duration)
 		if i < len(entries)-1 {
 			sb.WriteString("\n")
 		}

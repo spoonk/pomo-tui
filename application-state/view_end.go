@@ -9,25 +9,30 @@ import (
 )
 
 func (m Model) completedView() string {
-	endMessageStyle := lipgloss.NewStyle().Bold(true).Foreground(ui.WarnColor)
 	var endMessage string
 	if m.programState == sessionCompleteState {
+		endMessageStyle := lipgloss.NewStyle().Bold(true).Foreground(ui.SuccessColor)
 		endMessage = endMessageStyle.Render("✓ Session complete")
 	} else {
+		endMessageStyle := lipgloss.NewStyle().Bold(true).Foreground(ui.WarnColor)
 		endMessage = endMessageStyle.Render("⏺  Session stopped early")
 	}
 
 	infoLine := elapsedTimeUI(m)
 	hints := ui.Keybinds("r: restart · e: edit duration · q: quit")
-	list := ui.SessionList(toSessionListEntries(m.store))
 
-	content := lipgloss.JoinVertical(lipgloss.Center, endMessage, infoLine, list)
-	content = lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, content)
+	centeredContent := lipgloss.JoinVertical(lipgloss.Center, endMessage, infoLine)
+	contentH := lipgloss.Height(centeredContent)
+
+	centeredContent = lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, centeredContent)
 	centeredHints := lipgloss.Place(m.width, 0, lipgloss.Center, 0, hints)
+	list := ui.SessionList(toSessionListEntries(m.store))
+	centeredList := lipgloss.Place(m.width, 0, lipgloss.Center, 0, list)
 
-	contentWithHints := ui.CompositeOver(content, centeredHints, 0, m.height-2)
+	withList := ui.CompositeOver(centeredContent, centeredList, 0, (m.height+contentH)/2+2)
+	withHints := ui.CompositeOver(withList, centeredHints, 0, m.height-2)
 
-	return contentWithHints
+	return withHints
 }
 
 func elapsedTimeUI(m Model) string {
