@@ -30,12 +30,13 @@ type ProjectSelectorEnterMsg struct{ Selected *ProjectEntry }
 
 // ProjectSelector is a searchable dropdown component for picking a project.
 type ProjectSelector struct {
-	textInput textinput.Model
-	all       []ProjectEntry
-	filtered  []ProjectEntry
-	cursor    int
-	selected  *ProjectEntry
-	focused   bool
+	textInput  textinput.Model
+	all        []ProjectEntry
+	filtered   []ProjectEntry
+	cursor     int
+	viewOffset int
+	selected   *ProjectEntry
+	focused    bool
 }
 
 // NewProjectSelector creates a ProjectSelector pre-populated with projects.
@@ -89,8 +90,18 @@ func (ps ProjectSelector) AddProject(entry ProjectEntry) ProjectSelector {
 			break
 		}
 	}
+	ps.adjustViewport()
 	ps.textInput.SetValue(entry.Name)
 	return ps
+}
+
+// adjustViewport keeps cursor inside [viewOffset, viewOffset+10).
+func (ps *ProjectSelector) adjustViewport() {
+	if ps.cursor < ps.viewOffset {
+		ps.viewOffset = ps.cursor
+	} else if ps.cursor >= ps.viewOffset+10 {
+		ps.viewOffset = ps.cursor - 9
+	}
 }
 
 // refilter updates ps.filtered from the current text input value and clamps
@@ -117,6 +128,7 @@ func (ps *ProjectSelector) refilter() {
 	} else if ps.cursor >= total {
 		ps.cursor = total - 1
 	}
+	ps.viewOffset = 0
 }
 
 // showCreateOption returns true when the input text is non-empty and has no
@@ -147,14 +159,16 @@ func (ps ProjectSelector) Update(msg tea.Msg) (ProjectSelector, tea.Cmd) {
 			if ps.showCreateOption() {
 				total++
 			}
-			if ps.cursor < min(total-1, 10) {
+			if ps.cursor < total-1 {
 				ps.cursor++
+				ps.adjustViewport()
 			}
 			return ps, nil
 
 		case "up":
 			if ps.cursor > 0 {
 				ps.cursor--
+				ps.adjustViewport()
 				return ps, nil
 			}
 			// At the top — signal the parent to move focus up.
@@ -193,12 +207,10 @@ func (ps ProjectSelector) Update(msg tea.Msg) (ProjectSelector, tea.Cmd) {
 // When focused it shows the live text input; when unfocused it shows the
 // selected name or a faint "none" placeholder.
 func (ps ProjectSelector) View() string {
-	// return lipgloss.NewStyle().Faint(true).Render("none")
 	if ps.selected != nil && !ps.focused {
 		return ps.selected.Name
 	}
 	return ps.textInput.View()
-	// return lipgloss.NewStyle().Faint(true).Render("none")
 }
 
 // DropdownView renders the dropdown list indented by indent spaces, or an
@@ -215,36 +227,42 @@ func (ps ProjectSelector) DropdownView() string {
 	selectedStyle := lipgloss.NewStyle().Bold(true).Faint(true)
 	dimStyle := lipgloss.NewStyle().Faint(true)
 
-	shouldTruncate := len(ps.filtered) > 10
+	end := min(ps.viewOffset+10, len(ps.filtered))
 
 	var lines []string
-	for i, entry := range ps.filtered {
-		if i > 10 {
-			break
-		}
 
+	if ps.viewOffset > 0 {
+		lines = append(lines, dimStyle.Render(fmt.Sprintf("  \u2191 %d more", ps.viewOffset)))
+	}
+
+	for i, entry := range ps.filtered[ps.viewOffset:end] {
+		idx := ps.viewOffset + i
 		var line string
-		if i == ps.cursor {
-			line = selectedStyle.Render(" " + entry.Name)
+		if idx == ps.cursor {
+			line = selectedStyle.Render("\u25b8 " + entry.Name)
 		} else {
 			line = dimStyle.Render("  " + entry.Name)
 		}
 		lines = append(lines, line)
 	}
 
-	if hasCreate {
+	if hasCreate && end == len(ps.filtered) {
 		label := fmt.Sprintf("+ create \"%s\"", ps.textInput.Value())
 		var line string
 		if ps.cursor == len(ps.filtered) {
-			line = selectedStyle.Render("▶ " + label)
+			line = selectedStyle.Render("\u25b6 " + label)
 		} else {
 			line = dimStyle.Render("  " + label)
 		}
 		lines = append(lines, line)
 	}
 
-	if shouldTruncate {
-		lines = append(lines, dimStyle.Render("  ..."))
+	below := len(ps.filtered) - end
+	if hasCreate && end < len(ps.filtered) {
+		below++ // create row also hidden
+	}
+	if below > 0 {
+		lines = append(lines, dimStyle.Render(fmt.Sprintf("  \u2193 %d more", below)))
 	}
 
 	return strings.Join(lines, "\n")
