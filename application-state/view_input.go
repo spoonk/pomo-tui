@@ -54,7 +54,7 @@ func (m Model) inputView() string {
 	groupW := lipgloss.Width(content)
 	groupH := lipgloss.Height(content)
 
-	return ui.CompositeOver(inputGroup, dropdown, (m.width-groupW)/2, (m.height-groupH)/2+3)
+	return ui.CompositeOver(inputGroup, dropdown, (m.width-groupW)/2+1, (m.height-groupH)/2+3)
 }
 
 func applyWidth(input string, width int) string {
