@@ -239,7 +239,7 @@ func (ps ProjectSelector) DropdownView() string {
 		idx := ps.viewOffset + i
 		var line string
 		if idx == ps.cursor {
-			line = selectedStyle.Render("\u25b8 " + entry.Name)
+			line = selectedStyle.Render(" " + entry.Name)
 		} else {
 			line = dimStyle.Render("  " + entry.Name)
 		}
